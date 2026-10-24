@@ -11,3 +11,5 @@ torch
 torchreid
 streamlit
 pytest
+scipy
+plotly

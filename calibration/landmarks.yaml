@@ -1,0 +1,22 @@
+# Manually selected landmarks, read by eye from full-resolution frames (pixel coordinates x, y of the ground contact point).
+# They are NOT used to fit the calibration (it comes from the paving seams and time-synchronised foot points); they are an independent check:
+# the same physical point seen by several cameras must land on the same spot of the floor plan.
+# Picked by the AI assistant from stills in this session - please re-pick with tools/landmark_crop.py if you want a human-selected set.
+frame_time_s: 600          # moment of the frame for the two "at t=600 s" landmarks (the people stood still for about a minute)
+landmarks:
+  silver_bin_base:
+    note: silver cylinder bin next to the red kiosk, base centre (static)
+    use: true
+    pixels: {cam1: [530, 226], cam4: [1517, 226], cam7: [1255, 103]}
+  tent_front_left_corner:
+    note: green tent, front-left foot. The ground contact is hidden behind people in all three views, so these picks are unreliable (excluded from the error statistics)
+    use: false
+    pixels: {cam1: [808, 236], cam4: [1750, 246], cam7: [1627, 114]}
+  white_bag_on_ground:
+    note: white bag on the ground next to the standing group at t=600 s, bottom centre
+    use: true
+    pixels: {cam1: [850, 452], cam4: [1820, 488], cam5: [1650, 585], cam6: [717, 353]}
+  standing_group_feet_centroid:
+    note: centroid of the feet of the 5 people standing together at t=600 s (people shuffle a little, so only about 1 m is expected)
+    use: true
+    pixels: {cam1: [992, 463], cam2: [1517, 159], cam3: [787, 374], cam5: [1541, 563], cam6: [790, 357], cam7: [774, 551]}

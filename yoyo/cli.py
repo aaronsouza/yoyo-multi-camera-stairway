@@ -1,7 +1,7 @@
 """python -m yoyo.cli <stage> [--cams cam1 cam2] [--limit-s N] [--force]
 
 Stages (each checkpoints to results/ and is skipped if already done):
-  probe | detect | embed | identities | analyze | render | validate | calibrate | all
+  probe | detect | embed | identities | analyze | render | validate | calibrate | stitch | floorplan | calcheck | all
 detect/embed are the only expensive stages. identities/analyze/render re-run in seconds-minutes from saved data.
 """
 import argparse
@@ -60,9 +60,18 @@ def main():
     if st == "validate":
         from . import validate
         validate.run(cfg, a.gt, a.start_s, a.end_s, a.tol)
-    if st == "calibrate":
+    if st == "calibrate":  # bonus: calibration of all cameras onto one floor plan (the cams option is ignored: all 7 are tied together)
         from . import calibrate
-        calibrate.run(cfg, cams)
+        calibrate.run(cfg)
+    if st == "stitch":  # bonus: trajectories across cameras on the floor plan
+        from . import stitch
+        stitch.run(cfg)
+    if st == "floorplan":  # bonus: floor-plan picture and coverage regions
+        from . import floorplan
+        floorplan.build(cfg)
+    if st == "calcheck":  # bonus: landmark and time-shift validation of the calibration
+        from . import calibration_check
+        calibration_check.run(cfg)
 
 
 if __name__ == "__main__":

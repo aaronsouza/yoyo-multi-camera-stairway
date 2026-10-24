@@ -52,10 +52,37 @@ accuracy). Fill the table below after running it and explain each error.
 |---|---|---|---|---|---|---|
 | _todo_ | | | | | | |
 
-## Bonus: floor-plan stitching
-`tools/annotate.py --mode calib` / `--mode floor` write `homographies.yaml` (≥4 matching ground points per camera);
-`python -m yoyo.cli calibrate` projects identity tracks to `results/final/floor_tracks.png`. Homographies are valid on
-one plane only, so positions on the stairs are approximate.
+## Bonus: multi-camera calibration and track stitching
+All seven cameras are placed on one floor plan (metres, plaza ground plane) and tracks are stitched across cameras. It reuses the saved tracks and
+global IDs; no detector or ReID is run. Code: `yoyo/geometry.py`, `register.py`, `calibrate.py`, `floorplan.py`, `stitch.py`, `calibration_check.py`,
+`bonus_view.py` (the dashboard tab). Results of the calibration itself are versioned in `calibration/`.
+
+```
+python -m yoyo.cli calibrate   # seams -> ground orientation, heights, cameras tied together  -> calibration/calibration.json   (~15 min)
+python -m yoyo.cli floorplan   # plan picture + coverage                                       -> results/calibration/
+python -m yoyo.cli stitch      # trajectories across cameras                                   -> results/calibration/trajectories.csv.gz
+python -m yoyo.cli calcheck    # landmark + time-shift + third-camera validation               -> calibration/validation.json
+streamlit run app.py           # tab "Multi-Camera Calibration & Track Stitching (Bonus)"
+```
+**Method.** No floor plan or camera geometry was available, so none is assumed. (1) The plaza is paved with rectangular slabs: the seam lines form two
+perpendicular families. Fitting them in all cameras with one shared focal length gives each camera's ground-plane orientation (shared focal length 1566 px;
+median seam error 0.27-0.37 degrees). (2) Camera height comes from people's pixel height (adults taken as 1.7 m, about +-15%), which makes each plan
+metric. (3) The plans differ only by a rotation (multiple of 90 degrees), a small scale and a translation; they are found by letting every pair of foot
+points seen at the same instant vote for a translation, then refining all cameras jointly. This uses no identities, so the stitching test below is independent.
+(4) Tracklets of one global ID become one trajectory only if they agree in space and time (<= 5 m where two cameras overlap, a possible walk across gaps);
+otherwise the ID is split. Gaps stay gaps: positions are never interpolated, and stairs / far-field points are not mapped.
+
+| Check | Result |
+|---|---|
+| Landmarks (3 static objects read by eye, 13 observations, not used for fitting) | agree within rms 0.61 m, median 0.27 m, worst 1.24 m |
+| Same-instant foot points, all 21 camera pairs | every pair beats time-shifted chance: 9-41% of matches are real |
+| Third camera (predicted spot of a person seen by two cameras) | a detected person within 1 m in 77% of 600 cases (chance 61%; the plaza is crowded) |
+| Stitching vs reviewed identities (round 3, out-of-sample) | 16 of 16 decidable joins are the same person (8 more "cannot tell"); 6 of 7 decidable splits were really different people |
+| Result | 5,848 trajectories from 4,460 global IDs, 2,915 seen by 2+ cameras, 1,174 IDs split because they mixed people |
+
+**Limits.** The identity review was done by the AI assistant from crops, not by a human, on small samples (see `calibration/stitch_review_summary.json`);
+earlier rounds (greedy rule) were worse and were used to improve the rule. Lens distortion is not modelled, positions beyond ~6 camera heights are only
+approximate, and the staircase (not on the plaza plane) is left unmapped. Scale is approximate (+-15%) and the plan axes follow cam1's seams (rotated so cam5 looks up).
 
 ## Known limitations
 - OSNet x0.25 loaded with `weights: null` is only ImageNet-initialised; for real cross-camera ReID supply a

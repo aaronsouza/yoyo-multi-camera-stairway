@@ -1,0 +1,35 @@
+{
+ "rounds": [
+  {
+   "round": "round 1",
+   "rule": "greedy first-come lines, 3 m tolerance",
+   "joined pairs: same person": 19,
+   "joined: different people": 0,
+   "joined: cannot tell": 5,
+   "split pairs: really different": 3,
+   "split: actually the same person": 6,
+   "split: cannot tell": 3
+  },
+  {
+   "round": "round 2",
+   "rule": "average-linkage clustering, 5 m tolerance",
+   "joined pairs: same person": 16,
+   "joined: different people": 1,
+   "joined: cannot tell": 7,
+   "split pairs: really different": 3,
+   "split: actually the same person": 3,
+   "split: cannot tell": 6
+  },
+  {
+   "round": "round 3 (final rule)",
+   "rule": "two-stage: strong evidence first, then gaps only without contradiction",
+   "joined pairs: same person": 16,
+   "joined: different people": 0,
+   "joined: cannot tell": 8,
+   "split pairs: really different": 6,
+   "split: actually the same person": 1,
+   "split: cannot tell": 5
+  }
+ ],
+ "note": "Blind review of same-moment crops from two cameras (answer key hidden while judging), 24 pairs the stitching joined and 12 it split per round, judged by the AI assistant from the crops, NOT by a human. Rounds 1-2 were used to improve the rule; only round 3 is out-of-sample for the final rule. Samples are small (round 3: 16 decidable joins, 7 decidable splits), many pairs were 'cannot tell', so treat the percentages as indications. Please re-check the crops in evidence/bonus/stitch_review."
+}

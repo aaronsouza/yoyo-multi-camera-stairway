@@ -53,7 +53,7 @@ c[2].metric("Going DOWN", S["down"])
 c[3].metric("Groups UP", S["groups_up"])
 c[4].metric("Groups DOWN", S["groups_down"])
 
-tab_p, tab_r = st.tabs(["Proof of concept", "Results"])
+tab_p, tab_r, tab_b = st.tabs(["Proof of concept", "Results", "Multi-Camera Calibration & Track Stitching (Bonus)"])
 
 with tab_p:
     st.info("Every video here is a **30-second proof-of-concept sample** cut from the original footage and drawn from the saved results "
@@ -147,3 +147,7 @@ with tab_r:
     st.dataframe(groups, width="stretch")
     st.subheader("Standing groups (not counted)")
     st.dataframe(standing, width="stretch")
+
+with tab_b:
+    from yoyo import bonus_view
+    bonus_view.render(cfg)

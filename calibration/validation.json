@@ -1,0 +1,295 @@
+{
+ "landmarks": {
+  "silver_bin_base": {
+   "used": true,
+   "cameras": 3,
+   "error_m": {
+    "cam1": 0.8520734737199924,
+    "cam4": 0.2734299275372497,
+    "cam7": 1.0517588102322923
+   },
+   "distance_index": {
+    "cam1": 9.066148215053166,
+    "cam4": 9.298092381503041,
+    "cam7": 7.169019744659046
+   },
+   "max_pair_spread_m": 1.8946471106155836,
+   "note": "silver cylinder bin next to the red kiosk, base centre (static)"
+  },
+  "tent_front_left_corner": {
+   "used": false,
+   "cameras": 3,
+   "error_m": {
+    "cam1": 3.4043071371433635,
+    "cam4": 1.7698675533794925,
+    "cam7": 5.059890006887486
+   },
+   "distance_index": {
+    "cam1": 8.489508950072116,
+    "cam4": 8.622800677381695,
+    "cam7": 7.720589252207318
+   },
+   "max_pair_spread_m": 8.441040029232456,
+   "note": "green tent, front-left foot. The ground contact is hidden behind people in all three views, so these picks are unreliable (excluded from the error statistics)"
+  },
+  "white_bag_on_ground": {
+   "used": true,
+   "cameras": 4,
+   "error_m": {
+    "cam1": 0.23061692796646066,
+    "cam4": 0.1941198330459664,
+    "cam5": 0.07246939807816528,
+    "cam6": 0.13022965491370625
+   },
+   "distance_index": {
+    "cam1": 4.009136935302358,
+    "cam4": 3.8187165465802395,
+    "cam5": 4.333208226041934,
+    "cam6": 6.523282942400571
+   },
+   "max_pair_spread_m": 0.39932077122314574,
+   "note": "white bag on the ground next to the standing group at t=600 s, bottom centre"
+  },
+  "standing_group_feet_centroid": {
+   "used": true,
+   "cameras": 6,
+   "error_m": {
+    "cam1": 0.7878594699027832,
+    "cam2": 1.24476951881689,
+    "cam3": 0.12362194692833135,
+    "cam5": 0.6381429741379392,
+    "cam6": 0.5018820570431053,
+    "cam7": 0.14811780243616443
+   },
+   "distance_index": {
+    "cam1": 3.893442098128857,
+    "cam2": 9.706386017853722,
+    "cam3": 4.905451301423838,
+    "cam5": 4.564859483009171,
+    "cam6": 6.473610779574037,
+    "cam7": 2.3737801716621183
+   },
+   "max_pair_spread_m": 1.8694736174073325,
+   "note": "centroid of the feet of the 5 people standing together at t=600 s (people shuffle a little, so only about 1 m is expected)"
+  }
+ },
+ "landmark_stats": {
+  "n_observations": 13,
+  "rms_m": 0.6130990007639118,
+  "median_m": 0.2734299275372497,
+  "max_m": 1.24476951881689
+ },
+ "time_shift_baseline": [
+  {
+   "pair": "cam1-cam2",
+   "real": 6270,
+   "shifted": 3679,
+   "excess": 2591,
+   "real_share": 0.413
+  },
+  {
+   "pair": "cam1-cam3",
+   "real": 12556,
+   "shifted": 9891,
+   "excess": 2665,
+   "real_share": 0.212
+  },
+  {
+   "pair": "cam1-cam4",
+   "real": 13489,
+   "shifted": 9420,
+   "excess": 4069,
+   "real_share": 0.302
+  },
+  {
+   "pair": "cam1-cam5",
+   "real": 5004,
+   "shifted": 3690,
+   "excess": 1314,
+   "real_share": 0.263
+  },
+  {
+   "pair": "cam1-cam6",
+   "real": 9290,
+   "shifted": 7043,
+   "excess": 2247,
+   "real_share": 0.242
+  },
+  {
+   "pair": "cam1-cam7",
+   "real": 14347,
+   "shifted": 12192,
+   "excess": 2156,
+   "real_share": 0.15
+  },
+  {
+   "pair": "cam2-cam3",
+   "real": 6022,
+   "shifted": 4165,
+   "excess": 1857,
+   "real_share": 0.308
+  },
+  {
+   "pair": "cam2-cam4",
+   "real": 1655,
+   "shifted": 1299,
+   "excess": 356,
+   "real_share": 0.215
+  },
+  {
+   "pair": "cam2-cam5",
+   "real": 4927,
+   "shifted": 3910,
+   "excess": 1017,
+   "real_share": 0.206
+  },
+  {
+   "pair": "cam2-cam6",
+   "real": 4580,
+   "shifted": 3673,
+   "excess": 907,
+   "real_share": 0.198
+  },
+  {
+   "pair": "cam2-cam7",
+   "real": 5412,
+   "shifted": 4270,
+   "excess": 1142,
+   "real_share": 0.211
+  },
+  {
+   "pair": "cam3-cam4",
+   "real": 10952,
+   "shifted": 9936,
+   "excess": 1016,
+   "real_share": 0.093
+  },
+  {
+   "pair": "cam3-cam5",
+   "real": 6252,
+   "shifted": 4566,
+   "excess": 1686,
+   "real_share": 0.27
+  },
+  {
+   "pair": "cam3-cam6",
+   "real": 10259,
+   "shifted": 8348,
+   "excess": 1911,
+   "real_share": 0.186
+  },
+  {
+   "pair": "cam3-cam7",
+   "real": 14311,
+   "shifted": 12742,
+   "excess": 1569,
+   "real_share": 0.11
+  },
+  {
+   "pair": "cam4-cam5",
+   "real": 873,
+   "shifted": 586,
+   "excess": 287,
+   "real_share": 0.329
+  },
+  {
+   "pair": "cam4-cam6",
+   "real": 6512,
+   "shifted": 5056,
+   "excess": 1456,
+   "real_share": 0.224
+  },
+  {
+   "pair": "cam4-cam7",
+   "real": 12301,
+   "shifted": 10799,
+   "excess": 1502,
+   "real_share": 0.122
+  },
+  {
+   "pair": "cam5-cam6",
+   "real": 5040,
+   "shifted": 4062,
+   "excess": 978,
+   "real_share": 0.194
+  },
+  {
+   "pair": "cam5-cam7",
+   "real": 5538,
+   "shifted": 4677,
+   "excess": 861,
+   "real_share": 0.155
+  },
+  {
+   "pair": "cam6-cam7",
+   "real": 8856,
+   "shifted": 7892,
+   "excess": 964,
+   "real_share": 0.109
+  }
+ ],
+ "per_camera": {
+  "cam1": {
+   "seam_median_error_deg": 0.33515158088323177,
+   "seam_inlier_length_share": 0.7576725482940674,
+   "camera_height_m": 3.1233935275192835,
+   "vote_evidence": null
+  },
+  "cam2": {
+   "seam_median_error_deg": 0.3409013248236352,
+   "seam_inlier_length_share": 0.6324188709259033,
+   "camera_height_m": 2.041214057182742,
+   "vote_evidence": 3.2541186438365366
+  },
+  "cam3": {
+   "seam_median_error_deg": 0.37207778315966467,
+   "seam_inlier_length_share": 0.7802591323852539,
+   "camera_height_m": 3.090568011493815,
+   "vote_evidence": 2.9698989362555257
+  },
+  "cam4": {
+   "seam_median_error_deg": 0.35585537591202665,
+   "seam_inlier_length_share": 0.6680806875228882,
+   "camera_height_m": 3.241330791544442,
+   "vote_evidence": 3.1778304621704314
+  },
+  "cam5": {
+   "seam_median_error_deg": 0.2666305529694594,
+   "seam_inlier_length_share": 0.7414423227310181,
+   "camera_height_m": 1.6845988401667,
+   "vote_evidence": 3.746323360985579
+  },
+  "cam6": {
+   "seam_median_error_deg": 0.36063258338938303,
+   "seam_inlier_length_share": 0.7443411946296692,
+   "camera_height_m": 2.2828496735824046,
+   "vote_evidence": 3.2878735927414016
+  },
+  "cam7": {
+   "seam_median_error_deg": 0.34775139599760346,
+   "seam_inlier_length_share": 0.6852622628211975,
+   "camera_height_m": 3.900735018286923,
+   "vote_evidence": 2.7101506885438553
+  }
+ },
+ "third_camera_check": {
+  "trials": 600,
+  "chance_trials": 1175,
+  "median_distance_m": 0.5949811556595609,
+  "chance_median_distance_m": 0.7267798165854041,
+  "by_gate": {
+   "0.5": {
+    "hit_rate": 0.3883333333333333,
+    "chance_hit_rate": 0.32340425531914896
+   },
+   "1.0": {
+    "hit_rate": 0.7666666666666667,
+    "chance_hit_rate": 0.6127659574468085
+   },
+   "1.5": {
+    "hit_rate": 0.8716666666666667,
+    "chance_hit_rate": 0.7114893617021276
+   }
+  }
+ }
+}
