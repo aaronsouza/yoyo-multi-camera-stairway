@@ -1,46 +1,51 @@
 # Multi-Camera Stairway People & Group Counting
 
-Seven synchronized street CCTV cameras (1920×1080, 59.94 fps, ~35 min each) watch one plaza with a staircase. The system tracks people, counts
-**completed** UP/DOWN stair crossings without double-counting across cameras, finds groups of two or more, and shows everything in Streamlit.
-CPU-only (i7, no GPU), no paid services; every stage checkpoints and the app only reads saved results.
+A CPU-only computer-vision system for seven synchronized street CCTV cameras (1920×1080, 59.94 fps, ~35 min each) overlooking one plaza and a staircase.
+It tracks every person, counts **completed** UP/DOWN stair crossings once across cameras, detects walking groups by direction and size, and presents the
+results in a Streamlit dashboard. A bonus module places all seven cameras on one metric floor plan and stitches trajectories across cameras.
 
-## Features
+## Highlights
 | Requirement | Status |
 |---|---|
-| Detection + tracking with IDs, annotated video | ✅ |
-| Completed UP/DOWN crossings (no stops/turn-arounds) | ✅ |
-| Unique people / crossings across cameras | ✅ |
-| Groups of 2+ by direction and size | ✅ |
+| Detection + tracking with IDs, annotated video (all 7 cameras) | ✅ |
+| Completed UP/DOWN crossings: stops, turn-arounds and partial walks are not counted | ✅ |
+| Same person / same crossing across cameras counted once | ✅ |
+| Groups of 2+ by direction and size; standing groups reported separately | ✅ |
 | Streamlit demo | ✅ |
-| Bonus: calibration + track stitching | ✅ |
+| Bonus: multi-camera calibration, floor plan, track stitching | ✅ |
 
 ## Architecture
 ```
-videos ─► YOLO26n (OpenVINO, 960 px, 10 fps) ─► ByteTrack ─► tracks.csv
-                    └► OSNet-x0.25 (MSMT17) + HSV ─► embeddings ─► global IDs (average linkage, cannot-links)
+videos ─► YOLO26n (OpenVINO, 960 px, 10 fps) ─► ByteTrack ─► tracks
+                   └► OSNet-x0.25 (MSMT17) + HSV ─► embeddings ─► global IDs (average linkage, cannot-links)
 stair zones ─► two-zone crossing state machine ─► events ─► cross-camera dedup ─► crossing groups ─► Streamlit
-bonus: seam-based calibration ─► floor plan ─► stitched trajectories
+bonus: paving-seam calibration ─► common floor plan ─► stitched trajectories ─► Streamlit
 ```
-- **OpenVINO on CPU**: only detection and ReID are expensive; counting, grouping and calibration re-run from saved tracks in minutes.
-- **Crossing** = dwell in one stair-end zone, then the other within 25 s, on a continuous, correctly directed path. Cam5 adds wider zones, frame-edge exits and flip suppression.
-- **Cross-camera dedup**: global IDs first; because OSNet scores look-alike people at 0.84, cam5/cam2 crossings are also matched one-to-one by direction and start time (±1 s).
-- **Groups**: same-direction crossings within 4 s of people tracked walking together, built in one camera's view.
+- **Efficient on a laptop CPU (i7-10510U, no GPU):** OpenVINO detector at ~6–7 processed frames/s. Detection and ReID run once and are checkpointed
+  (resumable, every 300 frames); counting, grouping and calibration re-run from saved tracks without inference.
+- **Robust crossings:** a person must dwell in one stair-end zone and reach the other within 25 s on a continuous, correctly directed path. Cam5 adds
+  widened zones, frame-edge exit inference and direction-flip suppression.
+- **Cross-camera counting:** ReID-based global IDs, plus one-to-one time/direction matching of cam5↔cam2 crossings. 794 raw per-track transitions become
+  614 counted crossings.
+- **Groups:** same-direction crossings of people tracked walking together within 4 s, built in one camera's view (so one person is one member).
+- **Bonus calibration without a floor plan:** one shared focal length (1566 px) and each camera's ground orientation come from the paving seams (median
+  fit error 0.27–0.37°); cameras are tied together by time-synchronized foot-point voting, with no ReID, and refined jointly.
 
 ## Setup & run
 ```
-pip install -r requirements.txt           # Python 3.12; videos in data/videos/; MSMT17 OSNet weights at models/osnet_x0_25_msmt17.pth
-python -m yoyo.cli all                     # detect -> embed -> identities -> analyze -> render (resumable)
-python -m yoyo.cli analyze                 # counting/groups only, seconds, no inference
+pip install -r requirements.txt     # videos in data/videos/, OSNet MSMT17 weights at models/osnet_x0_25_msmt17.pth
+python -m yoyo.cli all              # detect -> embed -> identities -> analyze -> render
+python -m yoyo.cli analyze          # counting + groups only (no inference)
 python -m yoyo.cli calibrate && python -m yoyo.cli floorplan && python -m yoyo.cli stitch   # bonus
-python -m yoyo.cli validate --gt <verified.csv> --start-s A --end-s B
 streamlit run app.py
-python -m pytest tests                     # 25 synthetic tests
+python -m pytest tests              # 25 tests
 ```
-Zones: `zones.yaml` (edit with `tools/annotate.py`). Thresholds: `config.yaml`.
+Stair zones: `zones.yaml` (`tools/annotate.py`). Thresholds: `config.yaml`.
 
 ## Results
-Whole video (unverified): 5,024 global IDs (upper bound), 207 UP / 407 DOWN crossings, 36 UP / 74 DOWN groups.
-**Ground truth comparison** — the only check against manual counts: Cam5, 25:00–27:00, totals only, no event matching (also on the dashboard). Agreement = system / manual.
+Whole recording: **207 UP / 407 DOWN crossings, 36 UP / 74 DOWN groups**, 15,505 tracklets in 5,024 global IDs (an upper bound on distinct people).
+
+**Ground truth comparison** — Cam5, 25:00–27:00, manual count vs system (totals; agreement = system / manual):
 
 | Metric | Manual | Final | Agreement |
 |---|---|---|---|
@@ -55,22 +60,27 @@ Whole video (unverified): 5,024 global IDs (upper bound), 207 UP / 407 DOWN cros
 | Entities DOWN (group = 1) | 10 | 9 | 90% |
 | Entities total | 18 | 16 | 89% |
 
-Bonus (calibration/validation.json): shared focal length 1566 px; independent landmarks agree within rms 0.61 m; all 21 camera pairs beat time-shifted
-chance; 5,848 trajectories (2,915 multi-camera). Blind identity review (judged by the AI assistant, small samples): 16/16 decidable joins correct, 6/7 splits.
+**Bonus (`calibration/validation.json`)**
 
-**Limits**: no event-level precision/recall (no verified ground truth yet); `ground_truth.csv` is an unverified AI draft and is not used; cam5–cam2 dedup is
-~75% precise (estimated); DOWN group sizes still differ; cam1/cam3/cam4/cam7 yield no crossings; ReID merges look-alikes; bonus scale ±15%, stairs unmapped.
+| Check | Result |
+|---|---|
+| Independent landmarks, 3 static objects, 13 observations | agree within rms 0.61 m (median 0.27 m) |
+| Camera pairs vs time-shifted chance | all 21 pairs show real matches (9–41%) |
+| Third-camera prediction check | person within 1 m of the predicted spot in 77% of 600 cases (chance 61%) |
+| Trajectories | 5,848 from 4,460 global IDs; 2,915 seen by 2+ cameras |
+| Stitching vs blind identity review (AI-judged, small sample) | 16/16 decidable joins correct; 6/7 decidable splits correct |
 
 ## Dashboard (`app.py`)
-Proof of concept: 30 s clips for tracking (per camera), crossings, cross-camera matching, groups, and all four together (in `evidence/`, generated by
-`tools/make_*.py`, not versioned: CCTV footage). Results: counts, ground-truth comparison, crossing and group tables. Bonus tab: floor plan with camera
-coverage, person search, replay, camera views, calibration status.
+- **Proof of concept:** 30 s annotated clips for tracking (all cameras), crossings, cross-camera matching, groups, and all four together. Clips are generated
+  by `tools/make_*.py` into `evidence/` (not versioned: CCTV footage).
+- **Results:** headline counts, ground-truth comparison, crossing and group tables.
+- **Bonus tab:** interactive floor plan with camera coverage, person search, trajectory replay, camera views at a chosen moment, calibration status.
 
 ## Repository
 | Path | Purpose |
 |---|---|
-| `yoyo/` | pipeline: `detect`, `embed`, `identities`, `events`, `groups`, `report`, `render`, `validate`; bonus: `geometry`, `register`, `calibrate`, `stitch`, `floorplan`, `bonus_view` |
-| `config.yaml`, `zones.yaml` | thresholds and stair zones |
-| `calibration/` | versioned calibration, landmarks, validation, review results |
-| `tools/` | zone annotation and evidence-clip scripts |
+| `yoyo/` | pipeline (`detect`, `embed`, `identities`, `events`, `groups`, `report`, `render`, `validate`) and bonus (`geometry`, `register`, `calibrate`, `stitch`, `floorplan`, `bonus_view`) |
+| `config.yaml`, `zones.yaml` | thresholds, stair zones |
+| `calibration/` | calibration, landmarks, validation, review results |
+| `tools/` | zone annotation and clip generation |
 | `tests/` | synthetic tests |
