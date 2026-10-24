@@ -45,7 +45,7 @@ def tracklet_paths(obs, p):
         xy = g[["X", "Y"]].rolling(3, center=True, min_periods=1).median().values
         t = g.t.values
         step = np.hypot(*np.diff(xy, axis=0).T)
-        cut = np.flatnonzero((step > p["jump_m"]) & (np.diff(t) < 1.0)) + 1  # an ID swap or a mapping glitch, not a walk
+        cut = np.flatnonzero((step > p["jump_m"]) & (np.diff(t) < 1.0)) + 1
         for k, (a, b) in enumerate(zip(np.r_[0, cut], np.r_[cut, len(g)])):
             if b - a >= p["min_obs"]:
                 paths.append(dict(cam=cam, tid=int(tid), gid=int(g.gid.iloc[0]), k=k, t=t[a:b], xy=xy[a:b], cls=g.cls.values[a:b]))
@@ -60,7 +60,7 @@ def pair_score(a, b, par):
     lo, hi = max(a["t"][0], b["t"][0]), min(a["t"][-1], b["t"][-1])
     if hi - lo >= par["overlap_min_s"]:
         sel = (b["t"] >= lo) & (b["t"] <= hi)
-        if not sel.any():  # no sample of b falls inside the overlap: nothing to compare
+        if not sel.any():
             return 0.0, None
         mx = np.interp(b["t"][sel], a["t"], a["xy"][:, 0])
         my = np.interp(b["t"][sel], a["t"], a["xy"][:, 1])
@@ -134,7 +134,7 @@ def fuse(line, gid, k, par):
     df = pd.DataFrame(dict(b=b, x=xy[:, 0] * w, y=xy[:, 1] * w, w=w, cam=cam, rel=(cls == "reliable")))
     df["xr"], df["yr"] = df.x / df.w, df.y / df.w
     spread = df.groupby("b").agg(sx=("xr", lambda v: v.max() - v.min()), sy=("yr", lambda v: v.max() - v.min()))
-    far = spread.index[np.hypot(spread.sx, spread.sy) > par["conflict_m"]]  # cameras disagree here: keep only the best-resolved observation
+    far = spread.index[np.hypot(spread.sx, spread.sy) > par["conflict_m"]]
     keep = df[~df.b.isin(far)]
     top = df[df.b.isin(far)].sort_values("w", ascending=False).drop_duplicates("b")
     df = pd.concat([keep, top])

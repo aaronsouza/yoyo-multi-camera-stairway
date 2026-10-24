@@ -11,8 +11,8 @@ import numpy as np
 
 from .calibrate import APPROX_INDEX, RELIABLE_INDEX, Calibration, out_dir
 
-PPM = 20  # plan pixels per metre
-NEAR_LIMIT = 0.55  # pixels closer than ~1.8 camera heights are hugely magnified and smeared by people in the background: not used
+PPM = 20
+NEAR_LIMIT = 0.55
 
 
 def _grid(cal, cam, step=16, W=1920, H=1080):
@@ -71,17 +71,16 @@ def mosaic(cfg, cal, ext, ppm=PPM):
     for c in cal.cams:
         bg = cv2.imread(str(bgdir / f"{c}_bg.png"))
         H = S @ cal.H[c]
-        # quality of each source pixel = 1 / distance index (nearer to the camera = better resolved); only reliable pixels are used
         ys, xs = np.mgrid[0:1080, 0:1920]
         xy = np.c_[xs.ravel(), ys.ravel()].astype(float)
         C = np.c_[xy, np.ones(len(xy))] @ cal.G[c][2]
-        q = np.where((C > 1.0 / RELIABLE_INDEX) & (C < NEAR_LIMIT), C, 0).reshape(1080, 1920).astype(np.float32)  # drop the stretched near field
+        q = np.where((C > 1.0 / RELIABLE_INDEX) & (C < NEAR_LIMIT), C, 0).reshape(1080, 1920).astype(np.float32)
         from matplotlib.path import Path as MPath
         from .geometry import STAIRS
         if STAIRS.get(c):
             q[MPath(np.array(STAIRS[c]) * [1920, 1080]).contains_points(xy).reshape(1080, 1920)] = 0
         wq = cv2.warpPerspective(q, H, (Wp, Hp), flags=cv2.INTER_NEAREST)
-        bgn = cv2.convertScaleAbs(bg, alpha=190.0 / max(float(np.median(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY))), 1.0))  # same brightness for every camera
+        bgn = cv2.convertScaleAbs(bg, alpha=190.0 / max(float(np.median(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY))), 1.0))
         wi = cv2.warpPerspective(bgn, H, (Wp, Hp), flags=cv2.INTER_LINEAR)
         use = wq > best
         img[use] = wi[use]
@@ -90,13 +89,13 @@ def mosaic(cfg, cal, ext, ppm=PPM):
     return img, best > 0
 
 
-STAIRS_BASE_PX = {"cam5": [[76, 440], [1431, 412]]}  # foot of the first step in cam5, read from its seam lines (y 412-440 px, nearly horizontal)
+STAIRS_BASE_PX = {"cam5": [[76, 440], [1431, 412]]}
 
 
 def stairs_base(cal):
     out = []
     for cam, pts in STAIRS_BASE_PX.items():
-        p = np.c_[np.array(pts, float), np.ones(len(pts))] @ cal.H[cam].T  # direct homography: this line lies on the plaza plane, unlike the stairs
+        p = np.c_[np.array(pts, float), np.ones(len(pts))] @ cal.H[cam].T
         out = (p[:, :2] / p[:, 2:3]).tolist()
     return out
 

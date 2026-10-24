@@ -59,7 +59,7 @@ def baseline_test(cfg, cal, step=60, shifts_s=(-20, -10, -7, 7, 10, 20), gate=1.
     rows = []
     for a, b in itertools.combinations(cal.cams, 2):
         real = count(a, b, 0)
-        base = float(np.mean([count(a, b, int(s) * step) for s in shifts_s]))  # whole sampling steps (one step = one second), so frames stay aligned
+        base = float(np.mean([count(a, b, int(s) * step) for s in shifts_s]))
         rows.append(dict(pair=f"{a}-{b}", real=real, shifted=round(base), excess=round(real - base), real_share=round(max(real - base, 0) / max(real, 1), 3)))
         log(f"[check] {a}-{b}: {real} matches, {base:.0f} by chance, {rows[-1]['real_share']:.0%} real")
     return rows

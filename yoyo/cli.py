@@ -30,7 +30,7 @@ def main():
         raise SystemExit(f"No videos found in {cfg['video_dir']}")
     st = a.stage
 
-    if st == "probe":  # resolution/fps/duration + a still per camera for drawing zones
+    if st == "probe":
         for c in cams:
             cap = cv2.VideoCapture(str(vids[c]))
             fps, n = cap.get(5), int(cap.get(7))
@@ -60,16 +60,16 @@ def main():
     if st == "validate":
         from . import validate
         validate.run(cfg, a.gt, a.start_s, a.end_s, a.tol)
-    if st == "calibrate":  # bonus: calibration of all cameras onto one floor plan (the cams option is ignored: all 7 are tied together)
+    if st == "calibrate":
         from . import calibrate
         calibrate.run(cfg)
-    if st == "stitch":  # bonus: trajectories across cameras on the floor plan
+    if st == "stitch":
         from . import stitch
         stitch.run(cfg)
-    if st == "floorplan":  # bonus: floor-plan picture and coverage regions
+    if st == "floorplan":
         from . import floorplan
         floorplan.build(cfg)
-    if st == "calcheck":  # bonus: landmark and time-shift validation of the calibration
+    if st == "calcheck":
         from . import calibration_check
         calibration_check.run(cfg)
 

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.events import match_events  # noqa: E402
+from yoyo.events import match_events
 
 
 def run(path, pairs=(("cam5", "cam2"), ("cam5", "cam6"), ("cam2", "cam6")), windows=(0.5, 1.0, 1.5, 2.0, 3.0)):

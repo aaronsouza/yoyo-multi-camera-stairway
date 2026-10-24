@@ -1,69 +1,69 @@
-video_dir: data/videos        # put the 7 CCTV files here (cam id = file name stem)
+video_dir: data/videos
 work_dir: results
-offsets_s: {}                 # optional per-camera clock offset in seconds, e.g. {cam3: 1.5}
+offsets_s: {}
 process_fps: 10
 detector: {model: yolo26n.pt, imgsz: 960, conf: 0.25, openvino: true}
 tracker: {track_buffer: 50, match_thresh: 0.8}
 reid:
-  backend: osnet              # osnet | hsv (osnet falls back to hsv if torchreid is missing)
-  weights: models/osnet_x0_25_msmt17.pth   # MSMT17 (combineall) ReID checkpoint from the torchreid model zoo
+  backend: osnet
+  weights: models/osnet_x0_25_msmt17.pth
   obs_per_track: 8
   min_box_h: 80
   hsv_weight: 0.5
 identities:
-  min_track_frames: 15        # tracklets shorter than this are treated as noise
-  thr: 0.70                   # min average cosine similarity to merge tracklets
-  same_cam_penalty: 0.10      # extra evidence required to merge two tracklets of one camera
-  max_gap_cross_s: 30         # cross-camera: tracklets further apart in time can't be one person
-  reconnect_gap_s: 8          # same camera: max gap when repairing a broken track
+  min_track_frames: 15
+  thr: 0.70
+  same_cam_penalty: 0.10
+  max_gap_cross_s: 30
+  reconnect_gap_s: 8
   overlap_tol_s: 1.0
 events:
-  min_dwell_rows: 3           # frames a person must stay in a zone to register a visit
+  min_dwell_rows: 3
   gap_tol_s: 0.6
-  max_cross_s: 25             # max time between leaving one zone and reaching the other
-  min_cross_s: 1.0            # stairs take time; faster 'crossings' are tracking glitches
-  per_camera: true            # chain zone visits only within one camera, then merge across cameras by identity+time
+  max_cross_s: 25
+  min_cross_s: 1.0
+  per_camera: true
   merge_window_s: 6.0
-  verify_path: true           # crossing must be observed continuously (no track jumps), net motion in the right direction
-  min_coverage: 0.5           # fraction of frames between the zones in which the person must be tracked
-  max_speed_h_per_s: null     # OFF: reject events with a jump faster than this (body heights/s). 3.0 would drop 43 events whose validity is unverified
-  max_jump_heights: 1.0       # largest allowed foot jump between consecutive frames, in person heights
-  cam_overrides:              # per-camera settings; cam5 zones were widened, so the zone-to-zone gap is shorter
+  verify_path: true
+  min_coverage: 0.5
+  max_speed_h_per_s: null
+  max_jump_heights: 1.0
+  cam_overrides:
     cam5:
       min_cross_s: 0.5
-      path_pad_s: 1.0         # judge the path from 1 s before leaving the first zone to 1 s after entering the second
-      flip_window_s: 8        # opposite-direction events of one identity this close: keep the one that travelled further
-      min_net_dy: 0.10        # ...and the foot must travel at least this fraction of frame height (rejects hovering)
-  cross_camera_dedup:         # same crossing filmed by two cameras whose people ReID cannot link: match by direction + start time
-    window_s: 1.0             # est. precision 0.75 (tools/dedup_precision.py); 0.5 s -> 0.82 but fewer duplicates removed
-    pairs: [[cam5, cam2]]     # [kept camera, dropped camera]; cam5-cam6 and cam2-cam6 matches were mostly chance (precision <= 0.4)
-  local_events: true          # short tracks without a ReID identity still produce (local, never merged) crossings
-  edge:                       # inferred crossings for people leaving/entering through the left/right frame edge
+      path_pad_s: 1.0
+      flip_window_s: 8
+      min_net_dy: 0.10
+  cross_camera_dedup:
+    window_s: 1.0
+    pairs: [[cam5, cam2]]
+  local_events: true
+  edge:
     enabled: true
     cams: [cam5]
-    margin: 0.04              # box touching x<margin or x>1-margin of the frame width = edge exit
-    min_rise: 0.10            # net foot-y change (fraction of frame height) from the highest point on the stairs to the edge
-    ref_s: 3.0                # look back this long before leaving the top zone for that highest point
+    margin: 0.04
+    min_rise: 0.10
+    ref_s: 3.0
     min_dur_s: 1.0
     max_dur_s: 12.0
-    max_backtrack: 0.04       # path must be monotone: foot may move back at most this much
-    confirm_window_s: 6.0     # other camera seeing a same-direction crossing this close marks the event confirmed
+    max_backtrack: 0.04
+    confirm_window_s: 6.0
 groups:
-  mode: crossing           # groups = same-direction crossings of people walking together within a few seconds
-  pair_gap_s: 4.0             # max difference in crossing time inside one group
-  pair_window_s: 6.0          # the walking-together evidence must be this close to the crossing
-  max_span_s: 8.0             # a whole group crosses within this time (stops chaining of separate crossings)
-  prox_heights: 1.6           # max foot distance, in units of person height
+  mode: crossing
+  pair_gap_s: 4.0
+  pair_window_s: 6.0
+  max_span_s: 8.0
+  prox_heights: 1.6
   min_common_frames: 25
   frac_close: 0.7
-  min_move_heights: 0.5       # both must travel this far (walking, not standing)
+  min_move_heights: 0.5
   min_cos: 0.3
   event_window_s: 15
-  max_size: 8                 # larger connected blobs are treated as crowds
-  camera_priority: [cam5, cam2, cam6, cam1, cam3, cam4, cam7]  # a group is built in one camera's view: the first of these that saw the crossing
-  min_link_density: 0.5       # groups of 4+: at least this share of member pairs must be directly linked (rejects chains)
-  standing_min_frames: 50     # standing group: two people near each other for at least ~5 s
-  standing_prox_heights: 1.2  # ...within this many body heights for most of that time
+  max_size: 8
+  camera_priority: [cam5, cam2, cam6, cam1, cam3, cam4, cam7]
+  min_link_density: 0.5
+  standing_min_frames: 50
+  standing_prox_heights: 1.2
   standing_frac_close: 0.8
   standing_max_size: 6
 render: {width: 960, crf: 30}

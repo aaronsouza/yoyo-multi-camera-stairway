@@ -39,7 +39,7 @@ def run(cfg, gt_path, start_s, end_s, tol=8.0, log=print):
                gt_down=int((gt.direction == "DOWN").sum()), pred_down=int((ev.direction == "DOWN").sum()),
                tp=len(tp), fp=len(fp), fn=len(fn), precision=round(P, 3), recall=round(R, 3),
                false_positives=fp, missed=fn)
-    if "group_id" in gt:  # groups: ground-truth groups with >=2 members vs predicted groups in the segment
+    if "group_id" in gt:
         gg = gt.dropna(subset=["group_id"]).groupby("group_id").agg(n=("time_s", "size"), d=("direction", "first"),
                                                                      t=("time_s", "median")).reset_index()
         pg = pd.read_csv(fd / "groups.csv")

@@ -25,7 +25,7 @@ def visits_for_track(t, zone, cam, gap_tol, min_rows):
             cur["t1"] = ti
             cur["n"] += 1
         elif cur and z == "" and ti - cur["t1"] <= gap_tol:
-            continue  # brief dropout / walking between zone edge pixels
+            continue
         else:
             if cur:
                 out.append(cur)
@@ -62,7 +62,7 @@ def fast_jump(m, max_speed):
 
 def path_ok(rows, ev, e, fps_hint=10.0):
     """A crossing must be *seen*: dense observations between the zones, no position jumps, net motion in the right way."""
-    pad = e.get("path_pad_s", 0.0)  # widened zones leave a short gap, so judge the path over the visits' edges too
+    pad = e.get("path_pad_s", 0.0)
     gap = ev["t_end"] - ev["t_start"] + 2 * pad
     m = rows[(rows.t >= ev["t_start"] - pad - 1e-6) & (rows.t <= ev["t_end"] + pad + 1e-6)]
     if len(m) < 3 or len(m) < e.get("min_coverage", 0.5) * gap * fps_hint:
@@ -71,10 +71,10 @@ def path_ok(rows, ev, e, fps_hint=10.0):
     if step.max() > e.get("max_jump_heights", 1.0):
         return False
     if e.get("max_speed_h_per_s") and fast_jump(m, e["max_speed_h_per_s"]):
-        return False  # a body-height jump in a fraction of a second is a swapped track ID, not a walker
+        return False
     dy = m.fy.values[-1] - m.fy.values[0]
     if abs(dy) < e.get("min_net_dy", 0.0) * e.get("frame_h", 1.0):
-        return False  # hovering at the stair, not travelling along it
+        return False
     return dy < 0 if ev["direction"] == "UP" else dy > 0
 
 
@@ -96,7 +96,7 @@ def edge_events(g, visits, W, H, e, off=0.0):
         n = len(t[seg])
         if not e["min_dur_s"] <= dur <= e["max_dur_s"] or n < max(3, 0.5 * dur * 10):
             return False
-        f = fy[seg] if i1 > i0 else fy[seg][::-1]  # chronological
+        f = fy[seg] if i1 > i0 else fy[seg][::-1]
         rise = f[-1] - f[0]
         if (rise if down else -rise) < e["min_rise"]:
             return False
@@ -113,7 +113,7 @@ def edge_events(g, visits, W, H, e, off=0.0):
         if True:
             lo = int(np.searchsorted(t, tv["t1"] - e.get("ref_s", 3.0) - 1e-6))
             hi = max(int(np.searchsorted(t, tv["t1"] - 1e-6)), lo)
-            i0 = min(lo + int(np.argmin(fy[lo:hi + 1])), len(t) - 1)  # highest point reached on the stairs just before leaving
+            i0 = min(lo + int(np.argmin(fy[lo:hi + 1])), len(t) - 1)
             if ok(i0, len(t) - 1, True):
                 out.append(dict(direction="DOWN", t_start=float(t[i0]), t_end=float(t[-1]), rise=float(fy[-1] - fy[i0])))
     if tops and near[0]:
@@ -208,7 +208,7 @@ def dedup_cross_camera(ev, c):
 def compute_events(tracks, tracklets, zones, meta, cfg):
     """tracks: cam -> DataFrame; tracklets: cam,tid,gid; returns (events, naive per-camera counts)."""
     e, off = cfg["events"], cfg.get("offsets_s", {})
-    ecam = lambda c: {**e, **e.get("cam_overrides", {}).get(c, {})}  # per-camera event settings (e.g. widened zones)
+    ecam = lambda c: {**e, **e.get("cam_overrides", {}).get(c, {})}
     per_gid, naive, rows_by_key, inferred = {}, [], {}, []
     gid_of = {(r.cam, r.tid): r.gid for r in tracklets.itertuples()}
     ed = e.get("edge", {})
@@ -221,11 +221,11 @@ def compute_events(tracks, tracklets, zones, meta, cfg):
         for tid, g in df.groupby("tid"):
             ec = ecam(cam)
             v = visits_for_track(g.t.values + off.get(cam, 0), g.zone.values, cam, ec["gap_tol_s"], ec["min_dwell_rows"])
-            for ev in transitions(v, ec["max_cross_s"], ec.get("min_cross_s", 0)):  # per-tracklet, no cross-camera dedup
+            for ev in transitions(v, ec["max_cross_s"], ec.get("min_cross_s", 0)):
                 naive.append(dict(cam=cam, direction=ev["direction"]))
             if e.get("local_events", False) and (cam, tid) not in gid_of:
                 n_local += 1
-                gid_of[(cam, tid)] = -n_local  # no ReID embedding (short track): local identity, never merged
+                gid_of[(cam, tid)] = -n_local
             if ed.get("enabled", False) and cam in ed.get("cams", [cam]) and (cam, tid) in gid_of:
                 for x in edge_events(g, v, meta[cam]["width"], meta[cam]["height"], dict(e, **ed), off.get(cam, 0)):
                     inferred.append(dict(gid=gid_of[(cam, tid)], cam=cam, **x))
@@ -249,7 +249,7 @@ def compute_events(tracks, tracklets, zones, meta, cfg):
                              t_end=round(ev["t_end"], 2), cams=";".join(sorted(ev["cams"])), dy=ev.get("dy", 0.0),
                              flip=ec.get("flip_window_s", 0), inferred=False))
     win = e.get("merge_window_s", 6.0)
-    for r in inferred:  # edge-inferred crossings: skip when the same identity already has that crossing
+    for r in inferred:
         ec = ecam(r["cam"])
         if any(k["gid"] == r["gid"] and k["direction"] == r["direction"] and k["t_start"] <= r["t_end"] + win and k["t_end"] + win >= r["t_start"]
                for k in rows):
@@ -260,7 +260,7 @@ def compute_events(tracks, tracklets, zones, meta, cfg):
     ev = pd.DataFrame(rows, columns=["gid", "direction", "t_start", "t_end", "cams", "inferred"])
     ev = merge_across_cameras(ev, e.get("merge_window_s", 6.0))
     ev["confirmed_by"] = ""
-    for i, r in ev[ev.inferred].iterrows():  # another camera saw the same-direction crossing at the same time (confirmation only)
+    for i, r in ev[ev.inferred].iterrows():
         o = ev[(ev.direction == r.direction) & (~ev.cams.str.split(";").apply(lambda c: bool(set(c) & set(r.cams.split(";"))))) &
                ((ev.t_end - r.t_end).abs() <= ed.get("confirm_window_s", 6.0))]
         ev.at[i, "confirmed_by"] = ";".join(sorted(set(";".join(o.cams).split(";")))) if len(o) else ""

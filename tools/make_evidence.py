@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.common import ROOT, cam_dir, load_config, read_json, videos  # noqa: E402
-from yoyo.render import render_camera  # noqa: E402
+from yoyo.common import ROOT, cam_dir, load_config, read_json, videos
+from yoyo.render import render_camera
 
 DUR = 30
 
@@ -41,12 +41,10 @@ def main():
         out = out_dir / f"{cam}_{s0}-{s0 + DUR}s.mp4"
         stats = []
         render_camera(cfg, cam, vids[cam], s0, s0 + DUR, force=True, out_path=out, stats=stats)
-        # 1) annotations == saved tracking data: boxes drawn per frame vs rows in tracks.csv for the same frames
         frames = [f for f, _ in stats]
         expect = tr[tr.frame.isin(frames)].groupby("frame").size().reindex(frames, fill_value=0)
         drawn = np.array([n for _, n in stats])
         match = bool((drawn == expect.values).all())
-        # 2) the file decodes, has the expected length, and drawn boxes are visible in the decoded pixels
         cap = cv2.VideoCapture(str(out))
         n_out, w, h, rate = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), int(cap.get(3)), int(cap.get(4)), cap.get(5)
         sc = w / meta["width"]
@@ -59,7 +57,7 @@ def main():
             for r in tr[tr.frame == frames[i]].itertuples():
                 x, y = int(r.x1 * sc), int(r.y1 * sc)
                 patch = fr[max(y - 1, 0):y + 2, max(x - 1, 0):x + 2].reshape(-1, 3).astype(int)
-                bg = fr[max(y - 6, 0), max(x - 6, 0)].astype(int)  # a box edge differs clearly from nearby scene pixels
+                bg = fr[max(y - 6, 0), max(x - 6, 0)].astype(int)
                 tot += 1
                 hit += int(np.abs(patch - bg).sum(1).max() > 40)
         cap.release()

@@ -1,18 +1,15 @@
-# Normalised (0..1) polygons per camera (x right, y down). bottom = foot of stairs, top = head of stairs.
-# bottom->top = UP, top->bottom = DOWN. FIRST-PASS values read off stills; refine with tools/annotate.py.
-# cam4 and cam7 only see plaza (no stairs) -> no zones, they contribute identity matching only.
-cam1:   # stairs run along the right edge, rising away from camera
+cam1:
   bottom: [[0.84, 0.70], [1.0, 0.70], [1.0, 1.0], [0.84, 1.0]]
   top:    [[0.90, 0.14], [1.0, 0.14], [1.0, 0.30], [0.93, 0.30]]
-cam2:   # stairs upper-left, base runs diagonally
+cam2:
   bottom: [[0.12, 0.31], [0.42, 0.25], [0.55, 0.19], [0.55, 0.27], [0.42, 0.34], [0.12, 0.40]]
   top:    [[0.25, 0.02], [0.70, 0.01], [0.70, 0.08], [0.25, 0.10]]
-cam3:   # stairs along the left edge
+cam3:
   bottom: [[0.0, 0.75], [0.14, 0.75], [0.16, 1.0], [0.0, 1.0]]
   top:    [[0.0, 0.18], [0.10, 0.18], [0.10, 0.32], [0.0, 0.32]]
-cam5:   # frontal view of the wide stairs
+cam5:
   bottom: [[0.0, 0.34], [1.0, 0.34], [1.0, 0.47], [0.0, 0.47]]
   top:    [[0.0, 0.19], [1.0, 0.19], [1.0, 0.285], [0.0, 0.285]]
-cam6:   # stairs on the right, diagonal base
+cam6:
   bottom: [[0.62, 0.26], [0.80, 0.38], [0.90, 0.46], [0.80, 0.46], [0.62, 0.32]]
   top:    [[0.62, 0.12], [1.0, 0.08], [1.0, 0.17], [0.72, 0.19]]

@@ -17,7 +17,7 @@ if not (fd / "summary.json").exists():
 
 
 @st.cache_data
-def load(path, mtime):  # mtime in the key: re-read when the file changes
+def load(path, mtime):
     return pd.read_csv(path)
 
 

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.common import ROOT, cam_dir, final_dir, load_config, load_zones, read_json, videos  # noqa: E402
+from yoyo.common import ROOT, cam_dir, final_dir, load_config, load_zones, read_json, videos
 
 DUR = 30
 GREEN, RED, GREY = (60, 200, 60), (50, 50, 240), (170, 170, 170)
@@ -26,7 +26,6 @@ def main(cam, lo, hi):
     tr = pd.read_csv(cam_dir(cfg, cam) / "tracks.csv")
     gid = dict(zip(tl[tl.cam == cam].tid, tl[tl.cam == cam].gid))
     tr["gid"] = tr.tid.map(gid)
-    # review sheet for the whole interval (for the human to mark TP / FP / duplicate / wrong direction)
     sheet = ev[ev.t_end.between(lo, hi)].copy()
     sheet["video_time"] = sheet.t_end.apply(lambda t: f"{int(t // 60):02d}:{t % 60:04.1f}")
     for col in ("verdict (TP / FP / DUP / WRONG_DIR)", "notes"):
@@ -35,7 +34,6 @@ def main(cam, lo, hi):
     out_dir.mkdir(parents=True, exist_ok=True)
     sheet[["event_id", "video_time", "direction", "gid", "t_start", "t_end", "inferred", "confirmed_by", "entity",
            "verdict (TP / FP / DUP / WRONG_DIR)", "notes"]].to_csv(out_dir / f"{cam}_{lo}-{hi}_review_sheet.csv", index=False)
-    # busiest 30 s window of completed crossings inside [lo, hi]
     best = max(range(lo, hi - DUR + 1), key=lambda s: ev.t_end.between(s, s + DUR).sum())
     s0, s1 = best, best + DUR
     out = out_dir / f"{cam}_crossings_{s0}-{s1}s.mp4"
@@ -50,7 +48,6 @@ def main(cam, lo, hi):
            "-r", str(fps / stride), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "26", "-pix_fmt", "yuv420p",
            "-movflags", "+faststart", str(out)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    # path of each event: foot points of its identity in this camera between t_start and t_end
     paths = {}
     for r in ev.itertuples():
         g = tr[(tr.gid == r.gid) & tr.t.between(r.t_start, r.t_end)].sort_values("t")
@@ -85,7 +82,7 @@ def main(cam, lo, hi):
                     else:
                         cv2.rectangle(fr, (x1, y1), (x2, y2), GREY, 1)
                         cv2.putText(fr, lab, (x1, max(12, y1 - 3)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, GREY, 1, cv2.LINE_AA)
-                for r in act.itertuples():  # direction arrow: where the person was at the start of the crossing -> where they are now
+                for r in act.itertuples():
                     pts, ts = paths[r.event_id]
                     if len(pts) < 2:
                         continue

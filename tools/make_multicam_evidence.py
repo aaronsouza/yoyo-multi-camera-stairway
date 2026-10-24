@@ -11,11 +11,11 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.common import ROOT, cam_dir, final_dir, load_config, read_json, videos  # noqa: E402
+from yoyo.common import ROOT, cam_dir, final_dir, load_config, read_json, videos
 
 DUR = 30
 PAL = [(245, 130, 48), (200, 60, 200), (40, 220, 220), (66, 135, 245), (240, 200, 60), (150, 100, 240), (20, 140, 140), (240, 90, 120)]
-GREEN, RED, GREY = (60, 200, 60), (50, 50, 240), (150, 150, 150)  # unmatched crossing UP / DOWN, other people
+GREEN, RED, GREY = (60, 200, 60), (50, 50, 240), (150, 150, 150)
 
 
 def main(prim, sec):
@@ -48,7 +48,6 @@ def main(prim, sec):
            "-r", str(fps / stride), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "26", "-pix_fmt", "yuv420p",
            "-movflags", "+faststart", str(out)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    # every counted crossing of each camera: (gid in that camera, event id, direction, t_start, t_end, matched?, colour)
     shown = {prim: [], sec: []}
     mcol = {e.event_id: PAL[k % len(PAL)] for k, e in enumerate(both.itertuples())}
     for e in ev.itertuples():
@@ -64,7 +63,7 @@ def main(prim, sec):
     f = f0
     while f / fps <= s1:
         panels, ok_all = [], True
-        for name, c in cams.items():  # decode both cameras to the same frame index (synchronized clocks)
+        for name, c in cams.items():
             while c.get("pos", f0 - 1) < f:
                 if not c["cap"].grab():
                     ok_all = False
@@ -85,7 +84,7 @@ def main(prim, sec):
                     gid_, eid, d, ts, te, matched, col = hit[-1]
                     lab = f"{gid_s} E{eid} {d}{' MATCH' if matched else ''}{' done' if t >= te else ''}"
                     cv2.rectangle(fr, (x1, y1), (x2, y2), col, 3)
-                    ty = max(12, y1 - 4 - 13 * (k % 3))  # stagger labels so neighbours do not overwrite each other
+                    ty = max(12, y1 - 4 - 13 * (k % 3))
                     (tw, th), _ = cv2.getTextSize(lab, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
                     cv2.rectangle(fr, (x1, ty - th - 2), (x1 + tw + 2, ty + 3), (0, 0, 0), -1)
                     cv2.putText(fr, lab, (x1 + 1, ty), cv2.FONT_HERSHEY_SIMPLEX, 0.45, col, 1, cv2.LINE_AA)

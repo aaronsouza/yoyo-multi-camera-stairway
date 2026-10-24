@@ -34,8 +34,7 @@ def render_camera(cfg, cam, video, start_s=0, end_s=None, force=False, log=print
     gr = pd.read_csv(fd / "groups.csv") if (fd / "groups.csv").exists() else pd.DataFrame(columns=["group_id", "members"])
     ev_all = pd.read_csv(fd / "events.csv") if (fd / "events.csv").exists() else pd.DataFrame(columns=["event_id", "gid", "direction", "cams", "t_start", "t_end"])
     ev = ev_all[ev_all.cams.fillna("").str.split(";").apply(lambda x: cam in x)]
-    # a person is a group member only while the group crosses (time-local), never for the whole video
-    member_windows = {}  # gid -> [(t0, t1, group_id, size, direction)]
+    member_windows = {}
     if "event_ids" in gr.columns:
         by_id = ev_all.set_index("event_id")
         for gp in gr.itertuples():
@@ -46,7 +45,7 @@ def render_camera(cfg, cam, video, start_s=0, end_s=None, force=False, log=print
                         member_windows.setdefault(int(e.gid), []).append((e.t_start - 1.5, e.t_end + 2.5, gp.group_id, gp.size, gp.direction))
     sg_path = fd / "standing_groups.csv"
     sg = pd.read_csv(sg_path) if sg_path.exists() else pd.DataFrame(columns=["sg_id", "cam", "size", "tids", "t0", "t1"])
-    standing = {}  # tid -> (t0, t1, id, size): standing groups are drawn dashed and are not counted
+    standing = {}
     for s_ in sg[sg.cam == cam].itertuples():
         for tid_ in str(s_.tids).split(";"):
             standing[int(tid_)] = (s_.t0, s_.t1, s_.sg_id, s_.size)
@@ -73,19 +72,19 @@ def render_camera(cfg, cam, video, start_s=0, end_s=None, force=False, log=print
                     pts = (np.array(poly) * [ow, oh]).astype(np.int32)
                     cv2.polylines(fr, [pts], True, (0, 255, 255) if name == "top" else (255, 200, 0), 2)
                 if stats is not None:
-                    stats.append((f, len(by_frame.get(f, ()))))  # frame index, boxes drawn: checked against tracks.csv
+                    stats.append((f, len(by_frame.get(f, ()))))
                 for r in by_frame.get(f, pd.DataFrame()).itertuples():
                     g = gid.get((cam, r.tid))
                     t = f / fps
                     hit = [w for w in member_windows.get(int(g), []) if w[0] <= t <= w[1]] if g == g and g is not None else []
                     x1, y1, x2, y2 = (int(v * sc) for v in (r.x1, r.y1, r.x2, r.y2))
                     label = f"T{r.tid % 100000}" + (f" P{int(g)}" if g == g and g is not None else "")
-                    if hit:  # crossing group: colour = group, label = id, size, direction
+                    if hit:
                         _, _, gp_id, gp_size, gp_dir = hit[-1]
                         col = PALETTE[int(gp_id) % len(PALETTE)]
                         cv2.rectangle(fr, (x1, y1), (x2, y2), col, 3)
                         cv2.putText(fr, f"GROUP {int(gp_id)}  x{int(gp_size)}  {gp_dir}", (x1, max(26, y1 - 18)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, col, 2, cv2.LINE_AA)
-                    elif r.tid in standing and standing[r.tid][0] <= t <= standing[r.tid][1]:  # standing group: dashed, not counted
+                    elif r.tid in standing and standing[r.tid][0] <= t <= standing[r.tid][1]:
                         col = (200, 200, 200)
                         _, _, sg_id, sg_size = standing[r.tid]
                         _dashed_rect(fr, (x1, y1), (x2, y2), col)

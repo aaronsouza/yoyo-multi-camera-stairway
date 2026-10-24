@@ -12,8 +12,6 @@ import numpy as np
 from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
 
-# Rough ground masks (fractions of the frame) that keep seam lines of the plaza and drop sky, building facade, stairs and the far crowd.
-# Chosen by eye from stills; the optimisation treats every other line as an outlier.
 GROUND = {
     "cam1": [[0.0, 0.30], [0.86, 0.20], [0.86, 1.0], [0.0, 1.0]],
     "cam2": [[0.0, 0.38], [0.66, 0.30], [1.0, 0.14], [1.0, 1.0], [0.0, 1.0]],
@@ -25,8 +23,6 @@ GROUND = {
 }
 
 
-# Regions where a foot point is NOT on the plaza plane: the stairs. Foot points elsewhere (and not too close to the horizon) are used for
-# registration and trajectories. Chosen by eye from stills; polygons in fractions of the frame.
 STAIRS = {
     "cam1": [[0.86, 0.0], [1.0, 0.0], [1.0, 1.0], [0.86, 1.0]],
     "cam2": [[0.0, 0.0], [0.70, 0.0], [0.70, 0.10], [0.15, 0.36], [0.0, 0.36]],
@@ -84,7 +80,6 @@ def init_rotation(seg, f, W, H, rng=np.random.default_rng(0), iters=3000):
             continue
         d1 /= np.linalg.norm(d1)
         inl1 = np.abs(n @ d1) < 0.02
-        # the perpendicular family: directions orthogonal to d1 explained by the remaining lines
         rest = np.flatnonzero(~inl1)
         if len(rest) < 5:
             continue
@@ -135,9 +130,9 @@ def fit_all(segs, sizes, f0=1550.0):
 def ground_homography(R, f, W, H):
     """3x3 map from pixels to ground-plane coordinates (a, b), in units of the camera height h, as a right-handed top-down plan
     (the plan's X axis is one seam family; the 90-degree ambiguity is settled when cameras are registered to each other)."""
-    n = R[:, 2] * (1 if R[1, 2] > 0 else -1)  # plane normal pointing from the camera down to the ground (camera y axis points down)
+    n = R[:, 2] * (1 if R[1, 2] > 0 else -1)
     d1 = R[:, 0]
-    d2 = -np.cross(n, d1)  # right-handed when seen from above
+    d2 = -np.cross(n, d1)
     return np.vstack([d1, d2, n]) @ np.linalg.inv(K_of(f, W, H))
 
 
@@ -150,7 +145,7 @@ def rectify(bg, G, extent, ppu):
     """Top-down image of the ground of `bg` over extent=(a0, a1, b0, b1) (camera-height units) at ppu pixels per unit."""
     a0, a1, b0, b1 = extent
     Wp, Hp = int((a1 - a0) * ppu), int((b1 - b0) * ppu)
-    S = np.array([[ppu, 0, -a0 * ppu], [0, -ppu, b1 * ppu], [0, 0, 1.0]])  # plan -> output pixels (b up)
+    S = np.array([[ppu, 0, -a0 * ppu], [0, -ppu, b1 * ppu], [0, 0, 1.0]])
     return cv2.warpPerspective(bg, S @ G, (Wp, Hp), flags=cv2.INTER_LINEAR)
 
 
@@ -164,20 +159,20 @@ def camera_height(G, R, f, W, H, boxes, person_m=1.7, max_n=3000, seed=0):
     K = K_of(f, W, H)
     n = R[:, 2] * (1 if R[1, 2] > 0 else -1)
     foot = np.c_[(b[:, 0] + b[:, 2]) / 2, b[:, 3], np.ones(len(b))]
-    r = np.linalg.solve(K, foot.T).T                       # rays through the foot pixels
-    C = r @ n                                              # = n . r  (>0 for ground pixels)
+    r = np.linalg.solve(K, foot.T).T
+    C = r @ n
     ok = C > 0.05
     r, C, b = r[ok], C[ok], b[ok]
     meas = b[:, 3] - b[:, 1]
 
-    def height_px(h):  # pixel length of a person_m tall person standing at the foot ray, camera at height h
+    def height_px(h):
         Xf = (h / C)[:, None] * r
         Xh = Xf - n[None, :] * person_m
         pf = (K @ Xf.T).T
         ph = (K @ Xh.T).T
         return np.abs(ph[:, 1] / ph[:, 2] - pf[:, 1] / pf[:, 2])
 
-    lo, hi = np.full(len(b), 0.5), np.full(len(b), 40.0)  # bisection per detection: height_px decreases with h
+    lo, hi = np.full(len(b), 0.5), np.full(len(b), 40.0)
     for _ in range(40):
         mid = (lo + hi) / 2
         big = height_px(mid) > meas

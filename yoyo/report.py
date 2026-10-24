@@ -48,7 +48,7 @@ def analyze(cfg, cams, log=print):
     ev, naive = compute_events(tracks, tl, zones, meta, cfg)
     if cfg["groups"].get("mode") == "crossing":
         gr, sg = compute_all_groups(tracks, tl, ev, cfg)
-        sg.to_csv(fd / "standing_groups.csv", index=False)  # people close together for seconds, not going anywhere; never counted
+        sg.to_csv(fd / "standing_groups.csv", index=False)
     else:
         gr = compute_groups(tracks, tl, ev, cfg)
     ev["entity"] = ev.event_id.map(entities(ev, gr))

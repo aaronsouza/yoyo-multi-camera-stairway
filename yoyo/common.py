@@ -49,7 +49,7 @@ def write_json(p, obj):
     p = Path(p)
     tmp = p.with_suffix(p.suffix + ".tmp")
     tmp.write_text(json.dumps(obj, indent=2))
-    os.replace(tmp, p)  # atomic: a crash never leaves a half-written checkpoint
+    os.replace(tmp, p)
 
 
 def pick_cams(cfg, cams):

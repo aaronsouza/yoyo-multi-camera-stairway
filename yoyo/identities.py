@@ -54,7 +54,7 @@ def build_tracklets(cfg, cams):
             continue
         tr = pd.read_csv(cd / "tracks.csv")
         z = np.load(cd / "embeddings.npz")
-        zt, ze = z["tid"], z["emb"]  # load once: NpzFile re-decompresses on every access
+        zt, ze = z["tid"], z["emb"]
         order = np.argsort(zt, kind="stable")
         zt, ze = zt[order], ze[order]
         starts = np.r_[0, np.flatnonzero(np.diff(zt)) + 1, len(zt)]

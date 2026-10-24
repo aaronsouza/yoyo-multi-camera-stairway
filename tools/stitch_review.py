@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.calibrate import out_dir  # noqa: E402
-from yoyo.common import ROOT, cam_dir, load_config, videos  # noqa: E402
+from yoyo.calibrate import out_dir
+from yoyo.common import ROOT, cam_dir, load_config, videos
 
 
 def candidates(mem, same_line):
@@ -91,7 +91,7 @@ def main(n_pos=24, n_neg=12, seed=7):
             rows.append(np.zeros_like(rows[0]))
         grid = np.vstack([np.hstack(rows[i:i + 2]) for i in range(0, len(rows), 2)])
         cv2.imwrite(str(out / f"review_{page // per + 1}.png"), grid)
-    pd.DataFrame(key).to_csv(out / "_answer_key.csv", index=False)  # do not open before judging
+    pd.DataFrame(key).to_csv(out / "_answer_key.csv", index=False)
     print(len(picked), "pairs;", len(range(0, len(order), per)), "images in", out)
 
 

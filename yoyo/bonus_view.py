@@ -82,7 +82,7 @@ def _add_trajectory(fig, line, frames, step_s):
                                  line=dict(color="#e41a1c", width=1)), customdata=np.c_[g.t, g.cams, g.quality], hovertemplate="t=%{customdata[0]:.1f}s<br>%{customdata[1]}<br>%{customdata[2]}<extra></extra>",
                                  name="observed", legendgroup="obs", showlegend=bool(s == line.segment.min())))
         sub = g.iloc[::max(len(g) // 8, 1)]
-        if len(sub) > 1:  # direction arrows
+        if len(sub) > 1:
             fig.add_trace(go.Scatter(x=sub.X, y=sub.Y, mode="markers", marker=dict(symbol="arrow", size=12, angleref="previous", color="#e41a1c"), hoverinfo="skip", showlegend=False))
     segs = [g for _, g in line.groupby("segment")]
     for a, b in zip(segs, segs[1:]):
@@ -102,7 +102,7 @@ def _add_trajectory(fig, line, frames, step_s):
     fr = []
     for t in ts:
         i = int(np.abs(line.t.values - t).argmin())
-        seen = abs(line.t.values[i] - t) <= 1.0  # no observation within a second: the person is not shown (never extrapolated)
+        seen = abs(line.t.values[i] - t) <= 1.0
         r = line.iloc[i]
         fr.append(go.Frame(name=f"{t:.0f}", traces=[cur], data=[go.Scatter(x=[r.X if seen else None], y=[r.Y if seen else None],
                                                                               hovertext=f"t={t:.0f}s {'observed by ' + r.cams if seen else 'not observed'}", hoverinfo="text")]))

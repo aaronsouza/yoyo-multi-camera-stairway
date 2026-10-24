@@ -19,7 +19,6 @@ def plan_points(tracks, G, cam, W, H, h_m, step=30, min_c=0.14, min_box=40):
     t = tracks[(tracks.frame % step == 0) & (tracks.y2 < H - 6) & (tracks.y2 - tracks.y1 > min_box) & (tracks.x1 > 4) & (tracks.x2 < W - 4)].copy()
     xy = np.c_[(t.x1 + t.x2) / 2, t.y2]
     ab, C = to_plan(G, xy)
-    # keep points on the plaza plane (inside the ground mask) and not too close to the horizon, where one pixel is many metres
     from matplotlib.path import Path as MPath
     on_stairs = MPath(np.array(STAIRS[cam]) * [W, H]).contains_points(xy) if STAIRS.get(cam) else np.zeros(len(xy), bool)
     ok = ~on_stairs & (C > min_c)
@@ -44,7 +43,7 @@ def vote_pair(A, B, scales, bin_m=0.5, span_m=150.0):
             dx, dy = m.x_a.values - s * xb, m.y_a.values - s * yb
             H, _, _ = np.histogram2d(dx, dy, bins=[edges, edges], weights=w)
             Hs = H + np.roll(H, 1, 0) + np.roll(H, -1, 0) + np.roll(H, 1, 1) + np.roll(H, -1, 1) + np.roll(np.roll(H, 1, 0), 1, 1) \
-                + np.roll(np.roll(H, 1, 0), -1, 1) + np.roll(np.roll(H, -1, 0), 1, 1) + np.roll(np.roll(H, -1, 0), -1, 1)  # 3x3 sum (1.5 m)
+                + np.roll(np.roll(H, 1, 0), -1, 1) + np.roll(np.roll(H, -1, 0), 1, 1) + np.roll(np.roll(H, -1, 0), -1, 1)
             i = np.unravel_index(Hs.argmax(), Hs.shape)
             peak = float(Hs[i])
             if best is None or peak > best["peak"]:

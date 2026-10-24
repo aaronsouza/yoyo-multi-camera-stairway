@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.common import ROOT, cam_dir, final_dir, load_config, read_json, videos  # noqa: E402
+from yoyo.common import ROOT, cam_dir, final_dir, load_config, read_json, videos
 
 DUR = 30
 PAL = [(245, 130, 48), (200, 60, 200), (40, 220, 220), (66, 135, 245), (240, 200, 60), (150, 100, 240), (20, 140, 140), (240, 90, 120)]
@@ -49,7 +49,6 @@ def main(prim, sec, s0):
     group_of = {int(i): (g.group_id, g.size, g.direction) for g in gr.itertuples() for i in str(g.event_ids).split(";")}
     mcol = {e.event_id: PAL[k % len(PAL)] for k, e in enumerate(ev[ev.dedup_with.str.endswith("@" + sec)].itertuples())}
 
-    # per camera: every counted crossing as (gid in that camera, event id, direction, t_start, t_end, matched, colour)
     shown = {prim: [], sec: []}
     for e in ev.itertuples():
         cs = e.cams.split(";")
@@ -86,7 +85,6 @@ def main(prim, sec, s0):
            "-r", str(fps / stride), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "25", "-pix_fmt", "yuv420p",
            "-movflags", "+faststart", str(out)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    # groups completed (all events done) for the counters
     g_end = {g.group_id: e_by.loc[[int(i) for i in str(g.event_ids).split(";")]].t_end.max() for g in gr.itertuples()}
     f = f0
     while f / fps <= s1:
@@ -108,7 +106,7 @@ def main(prim, sec, s0):
             for x in act:
                 by_gid.setdefault(x[0], x)
             boxes = {}
-            for r in rows:  # 1 + 2 + 3: tracking ids, crossings, matches
+            for r in rows:
                 b = tuple(int(v * sc) for v in (r.x1, r.y1, r.x2, r.y2))
                 x1, y1, x2, y2 = b
                 gid_s = f"P{int(r.gid)}" if r.gid == r.gid else ""
@@ -125,14 +123,14 @@ def main(prim, sec, s0):
                 else:
                     cv2.rectangle(fr, (x1, y1), (x2, y2), GREY, 1)
                     cv2.putText(fr, f"T{r.tid % 100000} {gid_s}", (x1, max(12, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, GREY, 1, cv2.LINE_AA)
-            for x in act:  # 2: path walked, as an arrow
+            for x in act:
                 g = c["tr"][(c["tr"].gid == x[0]) & c["tr"].t.between(x[3], min(t, x[4]))].sort_values("t")
                 if len(g) >= 2:
                     pts = np.c_[(g.x1 + g.x2) / 2 * sc, g.y2 * sc].astype(np.int32)
                     cv2.polylines(fr, [pts], False, x[6], 2, cv2.LINE_AA)
                     cv2.arrowedLine(fr, tuple(pts[-2]), tuple(pts[-1]), x[6], 3, tipLength=3.0)
             seen = {}
-            for x in act:  # 4: one white envelope per crossing group around its visible members
+            for x in act:
                 if x[1] in group_of and x[0] in boxes:
                     seen.setdefault(group_of[x[1]], []).append(boxes[x[0]])
             for (gid_, size, d), bs in seen.items():

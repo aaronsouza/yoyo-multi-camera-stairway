@@ -24,7 +24,7 @@ def _pairs_in_cam(df, gid_map, g, with_time=False, standing=False):
         hm = x.h.mean()
         na, nb = np.linalg.norm(va), np.linalg.norm(vb)
         walking = (len(x) >= g["min_common_frames"] and (x.dist <= g["prox_heights"]).mean() >= g["frac_close"]
-                   and na / hm >= g["min_move_heights"] and nb / hm >= g["min_move_heights"]  # standing is not "walking together"
+                   and na / hm >= g["min_move_heights"] and nb / hm >= g["min_move_heights"]
                    and va @ vb / (na * nb) >= g["min_cos"])
         if walking:
             found.append((a, b, float(x.t.median())) if with_time else (a, b))
@@ -55,7 +55,7 @@ def compute_all_groups(tracks, tracklets, events, cfg):
     one camera's view (the highest-priority camera that saw each event), holds each person once, is not a long chain, and is a set
     of events (`event_ids`); size = people who crossed together."""
     g, off = cfg["groups"], cfg.get("offsets_s", {})
-    pair_t = {}  # (gid, gid) -> times at which the two were walking together
+    pair_t = {}
     stand_rows = []
     for cam, df in tracks.items():
         sub = tracklets[tracklets.cam == cam].set_index("tid")
@@ -90,8 +90,8 @@ def compute_all_groups(tracks, tracklets, events, cfg):
         te = ev.t_end.values[both]
         n_links = sum(1 for (x, y) in linked | {(i, j)} if x in both and y in both)
         if (len(both) > g.get("max_size", 8) or te.max() - te.min() > g.get("max_span_s", 8.0)
-                or len(set(ev.gid.values[both])) < len(both)  # one person cannot be two members
-                or (len(both) >= 4 and n_links < g.get("min_link_density", 0.5) * len(both) * (len(both) - 1) / 2)):  # no long chains
+                or len(set(ev.gid.values[both])) < len(both)
+                or (len(both) >= 4 and n_links < g.get("min_link_density", 0.5) * len(both) * (len(both) - 1) / 2)):
             continue
         linked.add((i, j))
         for k in members[rj]:
@@ -168,7 +168,7 @@ def compute_groups(tracks, tracklets, events, cfg):
         for x in list(parent):
             comps.setdefault(find(x), []).append(x)
         for tids in comps.values():
-            if 2 <= len(tids) <= g.get("max_size", 8):  # bigger blobs are crowds, not groups
+            if 2 <= len(tids) <= g.get("max_size", 8):
                 recs.append(dict(cam=cam, n=len(tids), gids=set(sub.loc[tids].gid), t=float(sub.loc[tids].tc.median())))
     par = list(range(len(recs)))
 

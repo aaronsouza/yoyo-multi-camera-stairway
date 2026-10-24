@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.calibrate import Calibration, out_dir  # noqa: E402
-from yoyo.common import ROOT, cam_dir, load_config, read_json, videos  # noqa: E402
+from yoyo.calibrate import Calibration, out_dir
+from yoyo.common import ROOT, cam_dir, load_config, read_json, videos
 
 DUR = 30
 RED, GOLD, WHITE = (60, 60, 230), (0, 215, 255), (255, 255, 255)
@@ -30,7 +30,6 @@ def main(line_id, cam_a, tid_a, cam_b, tid_b, s0):
     traj = pd.read_csv(d / "trajectories.csv.gz", dtype={"line_id": str})
     line = traj[traj.line_id == line_id].sort_values("t").reset_index(drop=True)
     s1 = s0 + DUR
-    # plan crop: trajectory of the clip, the two cameras, margin
     seg = line[line.t.between(s0 - 2, s1 + 2)]
     pts = np.r_[seg[["X", "Y"]].values, [cal.cal["cameras"][cam_a]["position_m"], cal.cal["cameras"][cam_b]["position_m"]]]
     x0, y0, x1, y1 = pts[:, 0].min() - 5, pts[:, 1].min() - 5, pts[:, 0].max() + 5, pts[:, 1].max() + 5
@@ -38,18 +37,17 @@ def main(line_id, cam_a, tid_a, cam_b, tid_b, s0):
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     box = (cx - side / 2, cx + side / 2, cy - side / 2, cy + side / 2)
     PW = 720
-    mpp = PW / side  # pixels per metre in the plan panel
+    mpp = PW / side
 
     def to_plan(xy):
         xy = np.asarray(xy, float).reshape(-1, 2)
         return np.c_[(xy[:, 0] - box[0]) * mpp, (box[3] - xy[:, 1]) * mpp].astype(int)
 
-    # background: crop of the mosaic, resized
     S = np.array([[ppm, 0, -ext[0] * ppm], [0, -ppm, ext[3] * ppm], [0, 0, 1.0]])
     M = np.array([[mpp, 0, -box[0] * mpp], [0, -mpp, box[3] * mpp], [0, 0, 1.0]]) @ np.linalg.inv(S)
     base = cv2.warpPerspective(mosaic, M, (PW, PW), borderValue=(238, 238, 238))
     base = cv2.addWeighted(base, 0.55, np.full_like(base, 245), 0.45, 0)
-    for c in (cam_a, cam_b):  # coverage of the two cameras
+    for c in (cam_a, cam_b):
         for kind, a in (("approximate", 0.10), ("reliable", 0.22)):
             for poly in meta["coverage"][c][kind]:
                 p = to_plan(poly)
@@ -68,7 +66,6 @@ def main(line_id, cam_a, tid_a, cam_b, tid_b, s0):
             cv2.arrowedLine(base, tuple(p), tuple(q.astype(int)), CAM_BGR[c], 3, tipLength=0.25)
             cv2.circle(base, tuple(p), 9, CAM_BGR[c], -1)
             cv2.putText(base, c, (p[0] + 10, p[1] + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (20, 20, 20), 2, cv2.LINE_AA)
-    # scale bar
     cv2.line(base, (20, PW - 20), (20 + int(5 * mpp), PW - 20), (0, 0, 0), 3)
     cv2.putText(base, "5 m", (20, PW - 28), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
@@ -122,7 +119,7 @@ def main(line_id, cam_a, tid_a, cam_b, tid_b, s0):
         plan = base.copy()
         seen = lt <= t
         trail = np.flatnonzero(seen & (lt >= s0 - 2))
-        for i in range(1, len(trail)):  # observed positions only; a gap longer than 1.5 s breaks the line
+        for i in range(1, len(trail)):
             if lt[trail[i]] - lt[trail[i - 1]] <= 1.5:
                 cv2.line(plan, tuple(to_plan([lx[trail[i - 1]], ly[trail[i - 1]]])[0]), tuple(to_plan([lx[trail[i]], ly[trail[i]]])[0]), RED, 3, cv2.LINE_AA)
         i = int(np.abs(lt - t).argmin())

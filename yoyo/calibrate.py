@@ -21,9 +21,9 @@ from . import geometry as geo
 from . import register as reg
 from .common import ROOT, cam_dir, load_config, read_json, videos, work
 
-CAL_DIR = ROOT / "calibration"  # small, versioned: the calibration itself
-OUT = "calibration"  # under results/: backgrounds, mosaic, trajectories (large, not versioned)
-RELIABLE_INDEX, APPROX_INDEX = 6.0, 10.0  # 1/C: distance from the camera in camera heights. Landmark checks: <=0.4 m error up to ~7, <=1.9 m up to ~10
+CAL_DIR = ROOT / "calibration"
+OUT = "calibration"
+RELIABLE_INDEX, APPROX_INDEX = 6.0, 10.0
 
 
 def out_dir(cfg):
@@ -101,7 +101,7 @@ def run(cfg=None, cams=None, log=print, ref="cam1", order=("cam1", "cam3", "cam5
         Hf = floor_homography(entry)
         entry["H_floor"] = Hf.tolist()
         nad = reg.to_common(T[c], np.zeros((1, 2)))[0]
-        fwd = np.array(R[c]) @ np.array([0, 0, 1.0])  # optical axis in the camera's own plan axes
+        fwd = np.array(R[c]) @ np.array([0, 0, 1.0])
         n_ = R[c][:, 2] * (1 if R[c][1, 2] > 0 else -1)
         d1, d2 = R[c][:, 0], -np.cross(n_, R[c][:, 0])
         axis = np.array([float(d1 @ [0, 0, 1]), float(d2 @ [0, 0, 1])])

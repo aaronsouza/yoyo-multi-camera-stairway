@@ -6,8 +6,8 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from yoyo.common import ROOT, final_dir, load_config, videos  # noqa: E402
-from yoyo.render import render_camera  # noqa: E402
+from yoyo.common import ROOT, final_dir, load_config, videos
+from yoyo.render import render_camera
 
 DUR = 30
 
@@ -30,7 +30,7 @@ def main(cam, lo, hi):
            "verdict (OK / WRONG_SIZE / NOT_A_GROUP)"]].to_csv(out_dir / f"{cam}_{lo}-{hi}_group_review_sheet.csv", index=False)
     stand = sg[(sg.cam == cam) & (sg.t0 < hi) & (sg.t1 > lo)]
 
-    def score(s):  # busiest window: crossing groups of both directions first, then standing groups
+    def score(s):
         g = gr[gr.t.between(s, s + DUR)]
         return 3 * len(g) + 2 * (g.direction.nunique() == 2) + 0.5 * ((stand.t0 < s + DUR) & (stand.t1 > s)).sum()
     s0 = max(range(lo, hi - DUR + 1), key=score)

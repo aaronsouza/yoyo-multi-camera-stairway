@@ -1,8 +1,4 @@
-# Manually selected landmarks, read by eye from full-resolution frames (pixel coordinates x, y of the ground contact point).
-# They are NOT used to fit the calibration (it comes from the paving seams and time-synchronised foot points); they are an independent check:
-# the same physical point seen by several cameras must land on the same spot of the floor plan.
-# Picked by the AI assistant from stills in this session - please re-pick with tools/landmark_crop.py if you want a human-selected set.
-frame_time_s: 600          # moment of the frame for the two "at t=600 s" landmarks (the people stood still for about a minute)
+frame_time_s: 600
 landmarks:
   silver_bin_base:
     note: silver cylinder bin next to the red kiosk, base centre (static)

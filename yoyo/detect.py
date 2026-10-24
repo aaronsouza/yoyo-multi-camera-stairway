@@ -5,8 +5,8 @@ import pandas as pd
 from .common import ROOT, cam_dir, read_json, write_json, work
 
 COLS = ["frame", "t", "tid", "x1", "y1", "x2", "y2", "conf"]
-FLUSH_EVERY = 300  # sampled frames between checkpoints
-SEG_STRIDE = 100000  # track-id offset per resume segment so IDs never collide
+FLUSH_EVERY = 300
+SEG_STRIDE = 100000
 
 
 def _in_models_dir(fn):
@@ -60,7 +60,7 @@ def process_camera(cfg, cam, video, limit_s=None, fresh=False, log=print):
     stride = max(1, round(fps / cfg["process_fps"]))
     start = prog.get("next_frame", 0)
     seg = prog.get("segment", -1) + 1 if start > 0 else 0
-    if start > 0 and tr_p.exists():  # drop rows written after the last checkpoint
+    if start > 0 and tr_p.exists():
         df = pd.read_csv(tr_p)
         df[df.frame < start].to_csv(tr_p, index=False)
     elif start == 0:

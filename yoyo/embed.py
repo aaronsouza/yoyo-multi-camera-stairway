@@ -8,7 +8,7 @@ from .common import ROOT, cam_dir, read_json
 def hsv_feat(crop):
     h = crop.shape[0]
     feats = []
-    for a, b in ((0.15, 0.55), (0.55, 1.0)):  # torso, legs
+    for a, b in ((0.15, 0.55), (0.55, 1.0)):
         hsv = cv2.cvtColor(crop[int(a * h):int(b * h)], cv2.COLOR_BGR2HSV)
         hist = cv2.calcHist([hsv], [0, 1, 2], None, [12, 4, 4], [0, 180, 0, 256, 0, 256]).ravel()
         feats.append(np.sqrt(hist / (hist.sum() + 1e-9)))
@@ -70,7 +70,7 @@ def process_camera(cfg, cam, video, emb=None, force=False, log=print):
     tracks = pd.read_csv(cd / "tracks.csv")
     r = cfg["reid"]
     n = tracks.groupby("tid").size()
-    tracks = tracks[tracks.tid.isin(n[n >= cfg["identities"]["min_track_frames"]].index)]  # skip noise tracks
+    tracks = tracks[tracks.tid.isin(n[n >= cfg["identities"]["min_track_frames"]].index)]
     sel = select_obs(tracks, prog, r["obs_per_track"], r["min_box_h"])
     emb = emb or Embedder(cfg)
     by_frame = {f: g for f, g in sel.groupby("frame")}
@@ -84,7 +84,7 @@ def process_camera(cfg, cam, video, emb=None, force=False, log=print):
             buf.clear()
             buft.clear()
 
-    pos = None  # sequential decode: far cheaper than a keyframe seek per crop on 60 fps H.264
+    pos = None
     for f in sorted(by_frame):
         if pos is None or f < pos or f - pos > 400:
             cap.set(cv2.CAP_PROP_POS_FRAMES, f)
