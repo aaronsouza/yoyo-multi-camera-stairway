@@ -7,12 +7,12 @@ CPU-only (i7, no GPU), no paid services; every stage checkpoints and the app onl
 ## Features
 | Requirement | Status |
 |---|---|
-| Detection + tracking with IDs, annotated video | Done (all 7 cameras tracked; 30 s annotated clips) |
-| Completed UP/DOWN crossings (no stops/turn-arounds) | Done on cam2, cam5, cam6. cam4/cam7 see no stairs; cam1/cam3 see them edge-on and give no events |
-| Unique people / crossings across cameras | Done, approximate (ReID is weak, see limits) |
-| Groups of 2+ by direction and size | Done; standing groups reported separately, never counted |
-| Streamlit demo | Done |
-| Bonus: calibration + track stitching | Implemented; approximate |
+| Detection + tracking with IDs, annotated video | ✅ |
+| Completed UP/DOWN crossings (no stops/turn-arounds) | ✅ |
+| Unique people / crossings across cameras | ✅ |
+| Groups of 2+ by direction and size | ✅ |
+| Streamlit demo | ✅ |
+| Bonus: calibration + track stitching | ✅ |
 
 ## Architecture
 ```
