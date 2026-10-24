@@ -52,6 +52,14 @@ def transitions(visits, max_cross, min_cross=0.0):
     return ev
 
 
+def fast_jump(m, max_speed):
+    """True when two consecutive observations imply a speed above `max_speed` body heights per second."""
+    dt = np.diff(m.t.values)
+    ok = dt > 0
+    speed = np.hypot(np.diff(m.fx.values), np.diff(m.fy.values))[ok] / m.h.values[1:][ok] / dt[ok]
+    return bool(len(speed) and speed.max() > max_speed)
+
+
 def path_ok(rows, ev, e, fps_hint=10.0):
     """A crossing must be *seen*: dense observations between the zones, no position jumps, net motion in the right way."""
     pad = e.get("path_pad_s", 0.0)  # widened zones leave a short gap, so judge the path over the visits' edges too
@@ -62,6 +70,8 @@ def path_ok(rows, ev, e, fps_hint=10.0):
     step = np.hypot(np.diff(m.fx.values), np.diff(m.fy.values)) / m.h.values[1:]
     if step.max() > e.get("max_jump_heights", 1.0):
         return False
+    if e.get("max_speed_h_per_s") and fast_jump(m, e["max_speed_h_per_s"]):
+        return False  # a body-height jump in a fraction of a second is a swapped track ID, not a walker
     dy = m.fy.values[-1] - m.fy.values[0]
     if abs(dy) < e.get("min_net_dy", 0.0) * e.get("frame_h", 1.0):
         return False  # hovering at the stair, not travelling along it
@@ -94,6 +104,8 @@ def edge_events(g, visits, W, H, e, off=0.0):
         if back.max() > e.get("max_backtrack", 0.04):
             return False
         step = np.hypot(np.diff(fx[seg]), np.diff(fy[seg])) / np.maximum(h[seg][1:], 1e-6)
+        if e.get("max_speed_h_per_s") and len(step) and (step / np.maximum(np.diff(t[seg]), 1e-6)).max() > e["max_speed_h_per_s"]:
+            return False
         return step.size == 0 or step.max() <= e.get("max_jump_heights", 1.0)
 
     if tops and near[-1]:
@@ -136,12 +148,13 @@ def drop_flips(rows):
 
 
 def merge_across_cameras(ev, window):
-    """Crossings seen by several cameras for one identity (same direction, close in time) are one event."""
+    """Crossings seen by several cameras for one identity (same direction, close in time) are one event.
+    Two events seen by the same camera are two crossings, however close in time."""
     out = []
     for (gid, d), g in ev.sort_values("t_end").groupby(["gid", "direction"]):
         cur = None
         for r in g.itertuples():
-            if cur and r.t_end - cur["t_end"] <= window:
+            if cur and r.t_end - cur["t_end"] <= window and not (cur["cams"] & set(r.cams.split(";"))):
                 cur["cams"] |= set(r.cams.split(";"))
                 cur["inferred"] = cur["inferred"] and r.inferred
                 cur["t_start"], cur["t_end"] = min(cur["t_start"], r.t_start), max(cur["t_end"], r.t_end)
@@ -154,6 +167,42 @@ def merge_across_cameras(ev, window):
     res = pd.DataFrame(out, columns=["gid", "direction", "t_start", "t_end", "cams", "inferred"])
     res["cams"] = res.cams.apply(lambda c: ";".join(sorted(c)))
     return res
+
+
+def match_events(a, b, window, col="t_start"):
+    """One-to-one matching of same-direction events of two cameras, closest start times first. Returns [(index_a, index_b)]."""
+    edges = []
+    for d in ("UP", "DOWN"):
+        ia, ib = a.index[a.direction == d], b.index[b.direction == d]
+        for i in ia:
+            for j in ib[(b.loc[ib, col] - a.loc[i, col]).abs() <= window]:
+                edges.append((abs(b.loc[j, col] - a.loc[i, col]), i, j))
+    used_a, used_b, out = set(), set(), []
+    for _, i, j in sorted(edges):
+        if i not in used_a and j not in used_b:
+            used_a.add(i)
+            used_b.add(j)
+            out.append((i, j))
+    return out
+
+
+def dedup_cross_camera(ev, c):
+    """The same crossing filmed by two cameras whose people could not be linked by appearance (ReID is weak: different people in
+    dark jackets score 0.84) is matched by time instead: same direction, start within `window_s`, one-to-one. Only camera pairs
+    listed in `pairs` ([primary, secondary]) are used - pairs whose overlap was proven with the shifted-baseline test. The primary
+    camera's event is kept, the secondary is dropped and recorded in `dedup_with`."""
+    ev = ev.copy()
+    ev["dedup_with"] = ""
+    cams = ev.cams.str.split(";")
+    drop = []
+    for prim, sec in c.get("pairs", []):
+        a = ev[(cams.apply(lambda x: x == [prim])) & ~ev.index.isin(drop)]
+        b = ev[(cams.apply(lambda x: x == [sec])) & ~ev.index.isin(drop)]
+        for i, j in match_events(a, b, c.get("window_s", 1.5)):
+            ev.at[i, "cams"] = ";".join(sorted({prim, sec}))
+            ev.at[i, "dedup_with"] = f"{ev.at[j, 'gid']}@{sec}"
+            drop.append(j)
+    return ev.drop(index=drop)
 
 
 def compute_events(tracks, tracklets, zones, meta, cfg):
@@ -215,6 +264,8 @@ def compute_events(tracks, tracklets, zones, meta, cfg):
         o = ev[(ev.direction == r.direction) & (~ev.cams.str.split(";").apply(lambda c: bool(set(c) & set(r.cams.split(";"))))) &
                ((ev.t_end - r.t_end).abs() <= ed.get("confirm_window_s", 6.0))]
         ev.at[i, "confirmed_by"] = ";".join(sorted(set(";".join(o.cams).split(";")))) if len(o) else ""
+    if e.get("cross_camera_dedup", {}).get("pairs"):
+        ev = dedup_cross_camera(ev, e["cross_camera_dedup"])
     ev = ev.sort_values("t_start").reset_index(drop=True)
     ev.insert(0, "event_id", np.arange(1, len(ev) + 1))
     return ev, pd.DataFrame(naive, columns=["cam", "direction"])

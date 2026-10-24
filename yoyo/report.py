@@ -2,7 +2,7 @@
 import pandas as pd
 from .common import cam_dir, final_dir, load_zones, read_json, write_json
 from .events import compute_events
-from .groups import compute_groups
+from .groups import compute_all_groups, compute_groups
 
 
 def load_tracks(cfg, cams):
@@ -46,7 +46,11 @@ def analyze(cfg, cams, log=print):
     tracks, meta = load_tracks(cfg, cams)
     zones = load_zones()
     ev, naive = compute_events(tracks, tl, zones, meta, cfg)
-    gr = compute_groups(tracks, tl, ev, cfg)
+    if cfg["groups"].get("mode") == "crossing":
+        gr, sg = compute_all_groups(tracks, tl, ev, cfg)
+        sg.to_csv(fd / "standing_groups.csv", index=False)  # people close together for seconds, not going anywhere; never counted
+    else:
+        gr = compute_groups(tracks, tl, ev, cfg)
     ev["entity"] = ev.event_id.map(entities(ev, gr))
     ev.to_csv(fd / "events.csv", index=False)
     gr.to_csv(fd / "groups.csv", index=False)

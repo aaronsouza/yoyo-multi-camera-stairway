@@ -26,6 +26,7 @@ events:
   merge_window_s: 6.0
   verify_path: true           # crossing must be observed continuously (no track jumps), net motion in the right direction
   min_coverage: 0.5           # fraction of frames between the zones in which the person must be tracked
+  max_speed_h_per_s: null     # OFF: reject events with a jump faster than this (body heights/s). 3.0 would drop 43 events whose validity is unverified
   max_jump_heights: 1.0       # largest allowed foot jump between consecutive frames, in person heights
   cam_overrides:              # per-camera settings; cam5 zones were widened, so the zone-to-zone gap is shorter
     cam5:
@@ -33,6 +34,9 @@ events:
       path_pad_s: 1.0         # judge the path from 1 s before leaving the first zone to 1 s after entering the second
       flip_window_s: 8        # opposite-direction events of one identity this close: keep the one that travelled further
       min_net_dy: 0.10        # ...and the foot must travel at least this fraction of frame height (rejects hovering)
+  cross_camera_dedup:         # same crossing filmed by two cameras whose people ReID cannot link: match by direction + start time
+    window_s: 1.0             # est. precision 0.75 (tools/dedup_precision.py); 0.5 s -> 0.82 but fewer duplicates removed
+    pairs: [[cam5, cam2]]     # [kept camera, dropped camera]; cam5-cam6 and cam2-cam6 matches were mostly chance (precision <= 0.4)
   local_events: true          # short tracks without a ReID identity still produce (local, never merged) crossings
   edge:                       # inferred crossings for people leaving/entering through the left/right frame edge
     enabled: true
@@ -56,4 +60,10 @@ groups:
   min_cos: 0.3
   event_window_s: 15
   max_size: 8                 # larger connected blobs are treated as crowds
+  camera_priority: [cam5, cam2, cam6, cam1, cam3, cam4, cam7]  # a group is built in one camera's view: the first of these that saw the crossing
+  min_link_density: 0.5       # groups of 4+: at least this share of member pairs must be directly linked (rejects chains)
+  standing_min_frames: 50     # standing group: two people near each other for at least ~5 s
+  standing_prox_heights: 1.2  # ...within this many body heights for most of that time
+  standing_frac_close: 0.8
+  standing_max_size: 6
 render: {width: 960, crf: 30}
