@@ -45,6 +45,10 @@ events:
     max_backtrack: 0.04       # path must be monotone: foot may move back at most this much
     confirm_window_s: 6.0     # other camera seeing a same-direction crossing this close marks the event confirmed
 groups:
+  mode: crossing           # groups = same-direction crossings of people walking together within a few seconds
+  pair_gap_s: 4.0             # max difference in crossing time inside one group
+  pair_window_s: 6.0          # the walking-together evidence must be this close to the crossing
+  max_span_s: 8.0             # a whole group crosses within this time (stops chaining of separate crossings)
   prox_heights: 1.6           # max foot distance, in units of person height
   min_common_frames: 25
   frac_close: 0.7

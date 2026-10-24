@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-def _pairs_in_cam(df, gid_map, g):
+def _pairs_in_cam(df, gid_map, g, with_time=False):
     d = df[df.tid.isin(gid_map.index)].copy()
     d["fx"], d["fy"], d["h"] = (d.x1 + d.x2) / 2, d.y2, d.y2 - d.y1
     m = d.merge(d, on="frame", suffixes=("", "_b"))
@@ -22,11 +22,69 @@ def _pairs_in_cam(df, gid_map, g):
             continue  # standing together is not "walking together"
         if va @ vb / (na * nb) < g["min_cos"]:
             continue
-        found.append((a, b))
+        found.append((a, b, float(x.t.median())) if with_time else (a, b))
     return found
 
 
+def compute_crossing_groups(tracks, tracklets, events, cfg):
+    """Groups of crossings: two same-direction crossing events belong to one group when the two people walked together
+    (a close, co-moving tracklet pair in the same camera) AND crossed within a few seconds of each other. The union is
+    time-local, so an identity that was re-used for a different person seconds later (merged ID) cannot chain two
+    separate crossings into one group. Every group is a set of events (`event_ids`), size = people who crossed together."""
+    g, off = cfg["groups"], cfg.get("offsets_s", {})
+    pair_t = {}  # (gid, gid) -> times at which the two were walking together
+    for cam, df in tracks.items():
+        sub = tracklets[tracklets.cam == cam].set_index("tid")
+        for a, b, tm in _pairs_in_cam(df, sub.gid, g, with_time=True):
+            ga, gb = int(sub.gid[a]), int(sub.gid[b])
+            if ga != gb:
+                pair_t.setdefault((min(ga, gb), max(ga, gb)), []).append(tm + off.get(cam, 0))
+    ev = events.reset_index(drop=True)
+    cams = [set(c.split(";")) for c in ev.cams]
+    edges = []
+    for i in range(len(ev)):
+        for j in range(i + 1, len(ev)):
+            a, b = ev.iloc[i], ev.iloc[j]
+            if a.direction != b.direction or abs(a.t_end - b.t_end) > g.get("pair_gap_s", 4.0) or not cams[i] & cams[j]:
+                continue
+            tm = pair_t.get((min(a.gid, b.gid), max(a.gid, b.gid)), [])
+            mid = (a.t_end + b.t_end) / 2
+            if any(abs(t - mid) <= g.get("pair_window_s", 6.0) for t in tm):
+                edges.append((abs(a.t_end - b.t_end), i, j))
+    par = list(range(len(ev)))
+
+    def f(x):
+        while par[x] != x:
+            par[x] = par[par[x]]
+            x = par[x]
+        return x
+
+    members = {i: [i] for i in range(len(ev))}
+    for _, i, j in sorted(edges):
+        ri, rj = f(i), f(j)
+        if ri == rj:
+            continue
+        both = members[ri] + members[rj]
+        te = ev.t_end.values[both]
+        if len(both) > g.get("max_size", 8) or te.max() - te.min() > g.get("max_span_s", 8.0):
+            continue
+        par[rj] = ri
+        members[ri] = both
+        del members[rj]
+    rows = []
+    for idx in sorted((m for m in members.values() if len(m) >= 2), key=lambda m: ev.t_start.values[m].min()):
+        sel = ev.iloc[idx]
+        rows.append(dict(size=len(idx), members=";".join(map(str, sorted(set(sel.gid)))), direction=sel.direction.iloc[0],
+                         n_crossing_members=len(idx), t=round(float(sel.t_start.median()), 2),
+                         cams=";".join(sorted(set(";".join(sel.cams).split(";")))), event_ids=";".join(map(str, sorted(sel.event_id)))))
+    out = pd.DataFrame(rows, columns=["size", "members", "direction", "n_crossing_members", "t", "cams", "event_ids"])
+    out.insert(0, "group_id", np.arange(1, len(out) + 1))
+    return out
+
+
 def compute_groups(tracks, tracklets, events, cfg):
+    if cfg["groups"].get("mode") == "crossing":
+        return compute_crossing_groups(tracks, tracklets, events, cfg)
     """Groups are built per camera from tracklet pairs (no cross-time chaining through identities), then the same
     group seen by several cameras is merged by shared identities + time. Size = most members any one camera saw."""
     g = cfg["groups"]

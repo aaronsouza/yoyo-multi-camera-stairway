@@ -19,6 +19,27 @@ def sizes(gr, d):
     return {int(k): int(v) for k, v in gr[gr.direction == d]["size"].value_counts().sort_index().items()}
 
 
+def entities(ev, gr):
+    """Counting units: a group that crossed together is ONE entity, every other crossing is its own (solo) entity.
+    Returns event_id -> entity key. Groups list their crossing events (`event_ids`); older group tables without that
+    column fall back to identity membership, picking the group closest in time for identities that sit in several."""
+    out = {r.event_id: f"S{r.event_id}" for r in ev.itertuples()}
+    if "event_ids" in gr.columns:
+        for g in gr.itertuples():
+            for i in str(g.event_ids).split(";"):
+                out[int(i)] = f"G{g.group_id}"
+        return out
+    member = {}
+    for g in gr[gr.direction != "NONE"].itertuples():
+        for m in str(g.members).split(";"):
+            member.setdefault((int(m), g.direction), []).append((g.group_id, g.t))
+    for r in ev.itertuples():
+        cand = member.get((r.gid, r.direction))
+        if cand:
+            out[r.event_id] = f"G{min(cand, key=lambda c: abs(c[1] - r.t_start))[0]}"
+    return out
+
+
 def analyze(cfg, cams, log=print):
     fd = final_dir(cfg)
     tl = pd.read_csv(fd / "tracklets.csv")
@@ -26,6 +47,7 @@ def analyze(cfg, cams, log=print):
     zones = load_zones()
     ev, naive = compute_events(tracks, tl, zones, meta, cfg)
     gr = compute_groups(tracks, tl, ev, cfg)
+    ev["entity"] = ev.event_id.map(entities(ev, gr))
     ev.to_csv(fd / "events.csv", index=False)
     gr.to_csv(fd / "groups.csv", index=False)
     people = tl.groupby("gid").agg(cams=("cam", lambda s: ";".join(sorted(set(s)))), t0=("t0", "min"),
@@ -42,6 +64,9 @@ def analyze(cfg, cams, log=print):
         unique_people=int(tl.gid.nunique()), tracklets=int(len(tl)),
         up=cnt(ev, "UP"), down=cnt(ev, "DOWN"),
         naive_up_sum_over_cameras=cnt(naive, "UP"), naive_down_sum_over_cameras=cnt(naive, "DOWN"),
+        entities_up=int(ev[ev.direction == "UP"].entity.nunique()), entities_down=int(ev[ev.direction == "DOWN"].entity.nunique()),
+        solo_up=int(ev[(ev.direction == "UP") & ev.entity.str.startswith("S")].shape[0]),
+        solo_down=int(ev[(ev.direction == "DOWN") & ev.entity.str.startswith("S")].shape[0]),
         groups_total=int(len(gr)), groups_up=cnt(gr, "UP"), groups_down=cnt(gr, "DOWN"),
         group_sizes_up=sizes(gr, "UP"), group_sizes_down=sizes(gr, "DOWN"),
         per_camera=per_cam)
