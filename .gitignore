@@ -1,0 +1,17 @@
+# data, models and generated output are not versioned (pushed later / downloaded by setup)
+data/
+videos/
+models/
+results/
+analysis/
+gt_clip/
+research/
+ground_truth.csv
+kernel.errors.txt
+__pycache__/
+*.pyc
+.pytest_cache/
+*.mp4
+*.pth
+*.pt
+*.npz

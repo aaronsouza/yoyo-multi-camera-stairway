@@ -1,0 +1,38 @@
+video_dir: data/videos        # put the 7 CCTV files here (cam id = file name stem)
+work_dir: results
+offsets_s: {}                 # optional per-camera clock offset in seconds, e.g. {cam3: 1.5}
+process_fps: 10
+detector: {model: yolo26n.pt, imgsz: 960, conf: 0.25, openvino: true}
+tracker: {track_buffer: 50, match_thresh: 0.8}
+reid:
+  backend: osnet              # osnet | hsv (osnet falls back to hsv if torchreid is missing)
+  weights: models/osnet_x0_25_msmt17.pth   # MSMT17 (combineall) ReID checkpoint from the torchreid model zoo
+  obs_per_track: 8
+  min_box_h: 80
+  hsv_weight: 0.5
+identities:
+  min_track_frames: 15        # tracklets shorter than this are treated as noise
+  thr: 0.70                   # min average cosine similarity to merge tracklets
+  same_cam_penalty: 0.10      # extra evidence required to merge two tracklets of one camera
+  max_gap_cross_s: 30         # cross-camera: tracklets further apart in time can't be one person
+  reconnect_gap_s: 8          # same camera: max gap when repairing a broken track
+  overlap_tol_s: 1.0
+events:
+  min_dwell_rows: 3           # frames a person must stay in a zone to register a visit
+  gap_tol_s: 0.6
+  max_cross_s: 25             # max time between leaving one zone and reaching the other
+  min_cross_s: 1.0            # stairs take time; faster 'crossings' are tracking glitches
+  per_camera: true            # chain zone visits only within one camera, then merge across cameras by identity+time
+  merge_window_s: 6.0
+  verify_path: true           # crossing must be observed continuously (no track jumps), net motion in the right direction
+  min_coverage: 0.5           # fraction of frames between the zones in which the person must be tracked
+  max_jump_heights: 1.0       # largest allowed foot jump between consecutive frames, in person heights
+groups:
+  prox_heights: 1.6           # max foot distance, in units of person height
+  min_common_frames: 25
+  frac_close: 0.7
+  min_move_heights: 0.5       # both must travel this far (walking, not standing)
+  min_cos: 0.3
+  event_window_s: 15
+  max_size: 8                 # larger connected blobs are treated as crowds
+render: {width: 960, crf: 30}

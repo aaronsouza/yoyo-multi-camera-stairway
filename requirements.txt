@@ -1,0 +1,13 @@
+numpy
+pandas
+pyyaml
+opencv-python
+matplotlib
+tqdm
+imageio-ffmpeg
+ultralytics>=8.4
+openvino
+torch
+torchreid
+streamlit
+pytest

@@ -1,0 +1,14 @@
+Fill ground_truth.csv (open in Excel/Notepad). One row per PERSON who COMPLETES a stair crossing.
+
+time_s     seconds from the start of the video when they finish the crossing (e.g. 5:12 -> 312). Decimals ok.
+direction  UP or DOWN (capital letters)
+group_id   leave EMPTY if the person walked alone.
+           People who walked together share the same number (1, 2, 3 ...), unique per group.
+
+Example (do not copy):
+312,UP,
+318,DOWN,1
+319,DOWN,1
+
+Rules: skip people who go partway and turn back, or sit/stand on the steps. Use the same segment for the whole file
+(note its start and end seconds). Delete or ignore unused blank rows - blank rows are skipped automatically.
