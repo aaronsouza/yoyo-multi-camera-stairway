@@ -1,0 +1,78 @@
+{
+  "unique_people": 5024,
+  "tracklets": 15505,
+  "up": 207,
+  "down": 407,
+  "naive_up_sum_over_cameras": 243,
+  "naive_down_sum_over_cameras": 551,
+  "entities_up": 158,
+  "entities_down": 263,
+  "solo_up": 122,
+  "solo_down": 189,
+  "groups_total": 110,
+  "groups_up": 36,
+  "groups_down": 74,
+  "group_sizes_up": {
+    "2": 26,
+    "3": 7,
+    "4": 3
+  },
+  "group_sizes_down": {
+    "2": 35,
+    "3": 17,
+    "4": 14,
+    "5": 7,
+    "6": 1
+  },
+  "per_camera": {
+    "cam1": {
+      "unique_people": 1952,
+      "up": 0,
+      "down": 0,
+      "naive_up": 0,
+      "naive_down": 0
+    },
+    "cam2": {
+      "unique_people": 1382,
+      "up": 62,
+      "down": 115,
+      "naive_up": 61,
+      "naive_down": 113
+    },
+    "cam3": {
+      "unique_people": 1944,
+      "up": 0,
+      "down": 0,
+      "naive_up": 0,
+      "naive_down": 0
+    },
+    "cam4": {
+      "unique_people": 1701,
+      "up": 0,
+      "down": 0,
+      "naive_up": 0,
+      "naive_down": 0
+    },
+    "cam5": {
+      "unique_people": 1306,
+      "up": 144,
+      "down": 346,
+      "naive_up": 158,
+      "naive_down": 382
+    },
+    "cam6": {
+      "unique_people": 1797,
+      "up": 24,
+      "down": 61,
+      "naive_up": 24,
+      "naive_down": 56
+    },
+    "cam7": {
+      "unique_people": 1834,
+      "up": 0,
+      "down": 0,
+      "naive_up": 0,
+      "naive_down": 0
+    }
+  }
+}

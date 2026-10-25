@@ -33,7 +33,8 @@ bonus: paving-seam calibration ─► common floor plan ─► stitched trajecto
 
 ## Setup & run
 ```
-pip install -r requirements.txt     # videos in data/videos/, OSNet MSMT17 weights at models/osnet_x0_25_msmt17.pth
+pip install -r requirements-pipeline.txt   # full pipeline; videos in data/videos/, OSNet MSMT17 weights at models/osnet_x0_25_msmt17.pth
+                                           # the dashboard alone only needs requirements.txt
 python -m yoyo.cli all              # detect -> embed -> identities -> analyze -> render
 python -m yoyo.cli analyze          # counting + groups only (no inference)
 python -m yoyo.cli calibrate && python -m yoyo.cli floorplan && python -m yoyo.cli stitch   # bonus
@@ -72,7 +73,7 @@ Whole recording: **207 UP / 407 DOWN crossings, 36 UP / 74 DOWN groups**, 15,505
 
 ## Dashboard (`app.py`)
 - **Proof of concept:** 30 s annotated clips for tracking (all cameras), crossings, cross-camera matching, groups, and all four together. Clips are generated
-  by `tools/make_*.py` into `evidence/` (not versioned: CCTV footage).
+  by `tools/make_*.py` into `evidence/`.
 - **Results:** headline counts, ground-truth comparison, crossing and group tables.
 - **Bonus tab:** interactive floor plan with camera coverage, person search, trajectory replay, camera views at a chosen moment, calibration status.
 
