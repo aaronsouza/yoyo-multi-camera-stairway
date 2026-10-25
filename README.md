@@ -63,6 +63,8 @@ Whole recording: **207 UP / 407 DOWN crossings, 36 UP / 74 DOWN groups**, 15,505
 | Entities DOWN (group = 1) | 10 | 9 | 90% |
 | Entities total | 18 | 16 | 89% |
 
+**Event-level check** (same window, each of the 25 counted crossings reviewed by hand): precision **100%** (25/25 correct, no duplicates, wrong directions or false counts), recall **92.6%** (25 of 27 real crossings; UP 11/12, DOWN 14/15).
+
 **Bonus (`calibration/validation.json`)**
 
 | Check | Result |
