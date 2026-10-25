@@ -4,6 +4,8 @@ A CPU-only computer-vision system for seven synchronized street CCTV cameras (19
 It tracks every person, counts **completed** UP/DOWN stair crossings once across cameras, detects walking groups by direction and size, and presents the
 results in a Streamlit dashboard. A bonus module places all seven cameras on one metric floor plan and stitches trajectories across cameras.
 
+**Live dashboard:** https://yoyo-multi-camera-stairway-qbbevhnrbrthuaxvqyaczz.streamlit.app/
+
 ## Highlights
 | Requirement | Status |
 |---|---|
