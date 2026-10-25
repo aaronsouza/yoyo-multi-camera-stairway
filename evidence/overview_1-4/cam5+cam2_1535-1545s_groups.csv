@@ -1,5 +1,4 @@
 group_id,direction,size,members,t,cams
-89,DOWN,3,3883;3884;3888,1519.52,cam2;cam5
 90,UP,2,1496;3023,1527.43,cam5;cam6
 91,DOWN,3,1542;3883;3889,1532.63,cam2;cam5
 92,UP,2,3893;3894,1533.58,cam5
