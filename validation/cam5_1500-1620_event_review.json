@@ -1,0 +1,10 @@
+{
+  "camera": "cam5",
+  "window_s": [1500, 1620],
+  "reviewed": "each of the 25 counted crossings reviewed by hand",
+  "counted": 25,
+  "correct": 25,
+  "real_total": 27,
+  "up": {"counted": 11, "correct": 11, "real": 12},
+  "down": {"counted": 14, "correct": 14, "real": 15}
+}

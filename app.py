@@ -133,6 +133,17 @@ with tab_r:
     st.table(manual_comparison().set_index("Metric"))
     st.caption("Count agreement (result / manual), not event-level matching.")
 
+    rv_path = ROOT / "validation" / "cam5_1500-1620_event_review.json"
+    if rv_path.exists():
+        rv = json.loads(rv_path.read_text())
+        st.subheader("Event-level check")
+        st.caption(f"Cam5, 25:00-27:00, {rv['reviewed']}.")
+        m = st.columns(4)
+        m[0].metric("Precision", f"{100 * rv['correct'] / rv['counted']:.0f}%", help=f"{rv['correct']} of {rv['counted']} counted crossings correct (no duplicates, wrong directions or false counts)")
+        m[1].metric("Recall", f"{100 * rv['correct'] / rv['real_total']:.1f}%", help=f"{rv['correct']} of {rv['real_total']} real crossings found")
+        m[2].metric("Recall UP", f"{rv['up']['correct']} of {rv['up']['real']}")
+        m[3].metric("Recall DOWN", f"{rv['down']['correct']} of {rv['down']['real']}")
+
     st.subheader("Unique crossing events (de-duplicated across cameras)")
     f = st.radio("Direction", ["ALL", "UP", "DOWN"], horizontal=True)
     st.dataframe(events if f == "ALL" else events[events.direction == f], width="stretch")
